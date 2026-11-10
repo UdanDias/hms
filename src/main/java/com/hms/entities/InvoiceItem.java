@@ -67,7 +67,7 @@ public class InvoiceItem extends AuditableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "accomodation_id", referencedColumnName = "id", nullable = true)
-    private Accommodation accommodation;
+    private AccommodationEntity accommodation;
 
     public InvoiceItem() {}
 
@@ -107,7 +107,7 @@ public class InvoiceItem extends AuditableEntity {
     public BigDecimal getLineTotal() { return lineTotal; }
     public void setLineTotal(BigDecimal lineTotal) { this.lineTotal = lineTotal; }
 
-    public Accommodation getAccommodation() { return accommodation; }
-    public void setAccommodation(Accommodation accommodation) { this.accommodation = accommodation; }
+    public AccommodationEntity getAccommodation() { return accommodation; }
+    public void setAccommodation(AccommodationEntity accommodation) { this.accommodation = accommodation; }
 
 }

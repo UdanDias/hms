@@ -7,7 +7,7 @@ import java.time.*;
 /** Maps the customer table. Relationships are unidirectional; use DTOs at API boundaries. */
 @Entity
 @Table(name = "customer")
-public class Customer extends AuditableEntity {
+public class CustomerEntity extends AuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -54,7 +54,7 @@ public class Customer extends AuditableEntity {
     @Column(name = "identity_document_number_encrypted", nullable = true, length = 1024)
     private byte[] identityDocumentNumberEncrypted;
 
-    public Customer() {}
+    public CustomerEntity() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

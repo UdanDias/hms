@@ -7,7 +7,7 @@ import java.time.*;
 /** Maps the booking_status_history table. Relationships are unidirectional; use DTOs at API boundaries. */
 @Entity
 @Table(name = "booking_status_history")
-public class BookingStatusHistory {
+public class BookingStatusHistoryEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -40,7 +40,7 @@ public class BookingStatusHistory {
     @Column(name = "changed_at", nullable = false)
     private LocalDateTime changedAt;
 
-    public BookingStatusHistory() {}
+    public BookingStatusHistoryEntity() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

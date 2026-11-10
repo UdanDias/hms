@@ -21,7 +21,7 @@ public class Review extends AuditableEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "customer_id", referencedColumnName = "id", nullable = false)
-    private Customer customer;
+    private CustomerEntity customer;
 
     @NotNull
     @Min(1)
@@ -65,8 +65,8 @@ public class Review extends AuditableEntity {
     public Reservation getReservation() { return reservation; }
     public void setReservation(Reservation reservation) { this.reservation = reservation; }
 
-    public Customer getCustomer() { return customer; }
-    public void setCustomer(Customer customer) { this.customer = customer; }
+    public CustomerEntity getCustomer() { return customer; }
+    public void setCustomer(CustomerEntity customer) { this.customer = customer; }
 
     public Integer getRating() { return rating; }
     public void setRating(Integer rating) { this.rating = rating; }

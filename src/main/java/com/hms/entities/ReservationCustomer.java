@@ -20,7 +20,7 @@ public class ReservationCustomer extends AuditableEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "customer_id", referencedColumnName = "id", nullable = false)
-    private Customer customer;
+    private CustomerEntity customer;
 
     @NotNull
     @Column(name = "is_primary_customer", nullable = false)
@@ -34,8 +34,8 @@ public class ReservationCustomer extends AuditableEntity {
     public ReservationRoom getReservationRoom() { return reservationRoom; }
     public void setReservationRoom(ReservationRoom reservationRoom) { this.reservationRoom = reservationRoom; }
 
-    public Customer getCustomer() { return customer; }
-    public void setCustomer(Customer customer) { this.customer = customer; }
+    public CustomerEntity getCustomer() { return customer; }
+    public void setCustomer(CustomerEntity customer) { this.customer = customer; }
 
     public Boolean getIsPrimaryCustomer() { return isPrimaryCustomer; }
     public void setIsPrimaryCustomer(Boolean isPrimaryCustomer) { this.isPrimaryCustomer = isPrimaryCustomer; }

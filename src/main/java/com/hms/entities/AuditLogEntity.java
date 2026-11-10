@@ -9,7 +9,7 @@ import org.hibernate.type.SqlTypes;
 /** Maps the audit_logs table. Relationships are unidirectional; use DTOs at API boundaries. */
 @Entity
 @Table(name = "audit_logs")
-public class AuditLog {
+public class AuditLogEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -17,7 +17,7 @@ public class AuditLog {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "hotel_id", referencedColumnName = "id", nullable = true)
-    private Hotel hotel;
+    private HotelEntity hotel;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "actor_user_id", referencedColumnName = "userId", nullable = true)
@@ -50,13 +50,13 @@ public class AuditLog {
     @Column(name = "occurred_at", nullable = false)
     private LocalDateTime occurredAt;
 
-    public AuditLog() {}
+    public AuditLogEntity() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Hotel getHotel() { return hotel; }
-    public void setHotel(Hotel hotel) { this.hotel = hotel; }
+    public HotelEntity getHotel() { return hotel; }
+    public void setHotel(HotelEntity hotel) { this.hotel = hotel; }
 
     public User getActorUser() { return actorUser; }
     public void setActorUser(User actorUser) { this.actorUser = actorUser; }

@@ -16,7 +16,7 @@ public class Reservation extends AuditableEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "hotel_id", referencedColumnName = "id", nullable = false)
-    private Hotel hotel;
+    private HotelEntity hotel;
 
     @NotNull
     @Column(name = "booking_reference", nullable = false, unique = true, length = 255)
@@ -25,7 +25,7 @@ public class Reservation extends AuditableEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "booker_customer_id", referencedColumnName = "id", nullable = false)
-    private Customer bookerCustomer;
+    private CustomerEntity bookerCustomer;
 
     @NotNull
     @Column(name = "status", nullable = false, length = 255)
@@ -61,14 +61,14 @@ public class Reservation extends AuditableEntity {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Hotel getHotel() { return hotel; }
-    public void setHotel(Hotel hotel) { this.hotel = hotel; }
+    public HotelEntity getHotel() { return hotel; }
+    public void setHotel(HotelEntity hotel) { this.hotel = hotel; }
 
     public String getBookingReference() { return bookingReference; }
     public void setBookingReference(String bookingReference) { this.bookingReference = bookingReference; }
 
-    public Customer getBookerCustomer() { return bookerCustomer; }
-    public void setBookerCustomer(Customer bookerCustomer) { this.bookerCustomer = bookerCustomer; }
+    public CustomerEntity getBookerCustomer() { return bookerCustomer; }
+    public void setBookerCustomer(CustomerEntity bookerCustomer) { this.bookerCustomer = bookerCustomer; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

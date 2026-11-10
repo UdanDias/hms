@@ -93,7 +93,7 @@ public class ReservationRoom extends AuditableEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "accomodation_id", referencedColumnName = "id", nullable = false)
-    private Accommodation accommodation;
+    private AccommodationEntity accommodation;
 
     public ReservationRoom() {}
 
@@ -151,7 +151,7 @@ public class ReservationRoom extends AuditableEntity {
     public LocalDateTime getActualCheckOutAt() { return actualCheckOutAt; }
     public void setActualCheckOutAt(LocalDateTime actualCheckOutAt) { this.actualCheckOutAt = actualCheckOutAt; }
 
-    public Accommodation getAccommodation() { return accommodation; }
-    public void setAccommodation(Accommodation accommodation) { this.accommodation = accommodation; }
+    public AccommodationEntity getAccommodation() { return accommodation; }
+    public void setAccommodation(AccommodationEntity accommodation) { this.accommodation = accommodation; }
 
 }

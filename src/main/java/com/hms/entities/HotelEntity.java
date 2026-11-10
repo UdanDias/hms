@@ -7,7 +7,7 @@ import java.time.*;
 /** Maps the hotels table. Relationships are unidirectional; use DTOs at API boundaries. */
 @Entity
 @Table(name = "hotels")
-public class Hotel extends AuditableEntity {
+public class HotelEntity extends AuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -58,7 +58,7 @@ public class Hotel extends AuditableEntity {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 
-    public Hotel() {}
+    public HotelEntity() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

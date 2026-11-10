@@ -26,7 +26,7 @@ public class ServiceCharge extends AuditableEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "service_id", referencedColumnName = "id", nullable = false)
-    private HotelService service;
+    private HotelServiceEntity service;
 
     @NotNull
     @Column(name = "description_snapshot", nullable = false, columnDefinition = "TEXT")
@@ -81,8 +81,8 @@ public class ServiceCharge extends AuditableEntity {
     public ReservationRoom getReservationRoom() { return reservationRoom; }
     public void setReservationRoom(ReservationRoom reservationRoom) { this.reservationRoom = reservationRoom; }
 
-    public HotelService getService() { return service; }
-    public void setService(HotelService service) { this.service = service; }
+    public HotelServiceEntity getService() { return service; }
+    public void setService(HotelServiceEntity service) { this.service = service; }
 
     public String getDescriptionSnapshot() { return descriptionSnapshot; }
     public void setDescriptionSnapshot(String descriptionSnapshot) { this.descriptionSnapshot = descriptionSnapshot; }

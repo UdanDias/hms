@@ -17,7 +17,7 @@ public class Invoice extends AuditableEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "hotel_id", referencedColumnName = "id", nullable = false)
-    private Hotel hotel;
+    private HotelEntity hotel;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -31,7 +31,7 @@ public class Invoice extends AuditableEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "billed_customer_id", referencedColumnName = "id", nullable = false)
-    private Customer billedCustomer;
+    private CustomerEntity billedCustomer;
 
     @NotNull
     @Column(name = "billing_name_snapshot", nullable = false, length = 255)
@@ -90,8 +90,8 @@ public class Invoice extends AuditableEntity {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Hotel getHotel() { return hotel; }
-    public void setHotel(Hotel hotel) { this.hotel = hotel; }
+    public HotelEntity getHotel() { return hotel; }
+    public void setHotel(HotelEntity hotel) { this.hotel = hotel; }
 
     public Reservation getReservation() { return reservation; }
     public void setReservation(Reservation reservation) { this.reservation = reservation; }
@@ -99,8 +99,8 @@ public class Invoice extends AuditableEntity {
     public String getInvoiceNumber() { return invoiceNumber; }
     public void setInvoiceNumber(String invoiceNumber) { this.invoiceNumber = invoiceNumber; }
 
-    public Customer getBilledCustomer() { return billedCustomer; }
-    public void setBilledCustomer(Customer billedCustomer) { this.billedCustomer = billedCustomer; }
+    public CustomerEntity getBilledCustomer() { return billedCustomer; }
+    public void setBilledCustomer(CustomerEntity billedCustomer) { this.billedCustomer = billedCustomer; }
 
     public String getBillingNameSnapshot() { return billingNameSnapshot; }
     public void setBillingNameSnapshot(String billingNameSnapshot) { this.billingNameSnapshot = billingNameSnapshot; }

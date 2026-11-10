@@ -15,7 +15,7 @@ public class RoomType extends AuditableEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "hotel_id", referencedColumnName = "id", nullable = false)
-    private Hotel hotel;
+    private HotelEntity hotel;
 
     @NotNull
     @Column(name = "name", nullable = false, length = 255)
@@ -53,8 +53,8 @@ public class RoomType extends AuditableEntity {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Hotel getHotel() { return hotel; }
-    public void setHotel(Hotel hotel) { this.hotel = hotel; }
+    public HotelEntity getHotel() { return hotel; }
+    public void setHotel(HotelEntity hotel) { this.hotel = hotel; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

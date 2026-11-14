@@ -10,7 +10,7 @@ public interface ReservationRoomService {
 
   ReservationRoomDTO addReservationRoom(ReservationRoomDTO dto);
 
-  ReservationRoomDTO updateReservationRoom(Long id, ReservationRoomDTO dto);
+  ReservationRoomDTO updateReservationRoom(Long reservationRoomId, ReservationRoomDTO dto);
 
   ReservationRoomDTO cancelReservationRoom(Long reservationRoomId, String reason);
 

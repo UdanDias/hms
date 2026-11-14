@@ -1,101 +1,139 @@
 package com.hms.service.impl;
 
-import com.hms.dao.HmsDao;
-import com.hms.dto.*;
-import com.hms.entities.*;
-import com.hms.service.*;
-import com.hms.service.impl.support.*;
+import com.hms.dao.HotelDAO;
+import com.hms.dao.ReservationRoomDAO;
+import com.hms.dao.RoomTypeDAO;
+import com.hms.dto.RoomTypeDTO;
+import com.hms.entities.HotelEntity;
+import com.hms.entities.RoomTypeEntity;
+import com.hms.exception.HotelNotFoundException;
+import com.hms.exception.RoomTypeNotFoundException;
+import com.hms.security.ServiceSecurity;
+import com.hms.service.RoomTypeService;
+import com.hms.util.AuditRecorder;
 import com.hms.util.EntityDTOConvert;
-import java.time.*;
-import java.util.*;
+import com.hms.util.ValidationUtil;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(isolation = Isolation.READ_COMMITTED)
 public class RoomTypeServiceImpl implements RoomTypeService {
-  private final HmsDao dao;
-  private final EntityDTOConvert mapper;
-  private final ServiceSupport s;
+  private final HotelDAO hotelDao;
+  private final RoomTypeDAO roomTypeDao;
+  private final ReservationRoomDAO reservationRoomDao;
+  private final EntityDTOConvert entityDTOConvert;
+  private final ServiceSecurity serviceSecurity;
+  private final ValidationUtil validationUtil;
+  private final AuditRecorder auditRecorder;
 
   @Override
+  @Transactional(readOnly = true)
   public RoomTypeDTO getSelectedRoomType(Long roomTypeId) {
-    s.actor();
-    var e = dao.require(RoomTypeEntity.class, roomTypeId);
-    s.checkRead(e);
-    return mapper.toDTO(e);
+    serviceSecurity.getCurrentUser();
+    RoomTypeEntity roomTypeEntity =
+        roomTypeDao
+            .findById(roomTypeId)
+            .orElseThrow(() -> new RoomTypeNotFoundException("RoomType not found"));
+    serviceSecurity.checkRead(roomTypeEntity);
+    return entityDTOConvert.convertRoomTypeEntityToRoomTypeDTO(roomTypeEntity);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<RoomTypeDTO> getAllRoomTypes() {
-    s.actor();
-    return dao.all(RoomTypeEntity.class).stream().filter(s::visible).map(mapper::toDTO).toList();
+    serviceSecurity.getCurrentUser();
+    List<RoomTypeEntity> entities =
+        roomTypeDao.findAll().stream().filter(serviceSecurity::canRead).toList();
+    return entityDTOConvert.convertRoomTypeEntityListToRoomTypeDTOList(entities);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public RoomTypeDTO addRoomType(RoomTypeDTO dto) {
-    s.allow("ADMIN", "MANAGER");
-    dao.lockHotels();
-    var e = mapper.toEntity(dto);
-    prepare(e, null);
-    s.validate(e);
-    dao.persist(e);
-    dao.flush();
-    return finish(e, "CREATE");
+  public RoomTypeDTO addRoomType(RoomTypeDTO roomTypeDTO) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    RoomTypeEntity roomTypeEntity =
+        entityDTOConvert.convertRoomTypeDTOToRoomTypeEntity(roomTypeDTO);
+    if (roomTypeDTO.getHotelId() != null) {
+      HotelEntity hotel =
+          hotelDao
+              .findById(roomTypeDTO.getHotelId())
+              .orElseThrow(() -> new HotelNotFoundException("Hotel not found"));
+      roomTypeEntity.setHotel(hotel);
+    }
+
+    validateRoomTypeForSave(roomTypeEntity, null);
+    validationUtil.validate(roomTypeEntity);
+    roomTypeDao.save(roomTypeEntity);
+    auditRecorder.recordAction("CREATE", "RoomType", roomTypeEntity.getId());
+    roomTypeDao.flush();
+    return entityDTOConvert.convertRoomTypeEntityToRoomTypeDTO(roomTypeEntity);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public RoomTypeDTO updateRoomType(Long id, RoomTypeDTO dto) {
-    s.allow("ADMIN", "MANAGER");
-    dao.lockHotels();
-    var old = dao.require(RoomTypeEntity.class, id);
-    var e = mapper.toEntity(dto);
-    prepare(e, old);
-    s.validate(e);
-    BeanUtils.copyProperties(e, old, "id", "createdAt", "updatedAt");
-    return finish(old, "UPDATE");
+  public RoomTypeDTO updateRoomType(Long roomTypeId, RoomTypeDTO roomTypeDTO) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    RoomTypeEntity roomTypeEntity =
+        roomTypeDao
+            .findById(roomTypeId)
+            .orElseThrow(() -> new RoomTypeNotFoundException("RoomType not found"));
+    RoomTypeEntity requestedRoomType =
+        entityDTOConvert.convertRoomTypeDTOToRoomTypeEntity(roomTypeDTO);
+    if (roomTypeDTO.getHotelId() != null) {
+      HotelEntity hotel =
+          hotelDao
+              .findById(roomTypeDTO.getHotelId())
+              .orElseThrow(() -> new HotelNotFoundException("Hotel not found"));
+      requestedRoomType.setHotel(hotel);
+    }
+
+    validateRoomTypeForSave(requestedRoomType, roomTypeEntity);
+    validationUtil.validate(requestedRoomType);
+    roomTypeEntity.setHotel(requestedRoomType.getHotel());
+    roomTypeEntity.setName(requestedRoomType.getName());
+    roomTypeEntity.setDescription(requestedRoomType.getDescription());
+    roomTypeEntity.setMaxAdults(requestedRoomType.getMaxAdults());
+    roomTypeEntity.setMaxChildren(requestedRoomType.getMaxChildren());
+    roomTypeEntity.setMaxOccupancy(requestedRoomType.getMaxOccupancy());
+    roomTypeEntity.setBedDescription(requestedRoomType.getBedDescription());
+    roomTypeEntity.setIsActive(requestedRoomType.getIsActive());
+    validationUtil.validate(roomTypeEntity);
+    roomTypeDao.save(roomTypeEntity);
+    auditRecorder.recordAction("UPDATE", "RoomType", roomTypeEntity.getId());
+    roomTypeDao.flush();
+    return entityDTOConvert.convertRoomTypeEntityToRoomTypeDTO(roomTypeEntity);
   }
 
-  private void prepare(RoomTypeEntity e, RoomTypeEntity old) {
-    if (e.getDescription() == null) e.setDescription("");
-    if (e.getBedDescription() == null) e.setBedDescription("");
-    s.require(e.getHotel() != null, "Hotel is required");
-    s.text(e.getName(), "Room type name");
-    s.require(
-        e.getMaxAdults() != null
-            && e.getMaxAdults() >= 1
-            && e.getMaxChildren() != null
-            && e.getMaxChildren() >= 0
-            && e.getMaxOccupancy() != null
-            && e.getMaxOccupancy() >= 1
-            && e.getMaxAdults() <= e.getMaxOccupancy(),
+  private void validateRoomTypeForSave(
+      RoomTypeEntity roomTypeEntity, RoomTypeEntity existingRoomType) {
+    if (roomTypeEntity.getDescription() == null) roomTypeEntity.setDescription("");
+    if (roomTypeEntity.getBedDescription() == null) roomTypeEntity.setBedDescription("");
+    validationUtil.require(roomTypeEntity.getHotel() != null, "Hotel is required");
+    validationUtil.text(roomTypeEntity.getName(), "Room type name");
+    validationUtil.require(
+        roomTypeEntity.getMaxAdults() != null
+            && roomTypeEntity.getMaxAdults() >= 1
+            && roomTypeEntity.getMaxChildren() != null
+            && roomTypeEntity.getMaxChildren() >= 0
+            && roomTypeEntity.getMaxOccupancy() != null
+            && roomTypeEntity.getMaxOccupancy() >= 1
+            && roomTypeEntity.getMaxAdults() <= roomTypeEntity.getMaxOccupancy(),
         "Invalid occupancy limits");
-    if (e.getIsActive() == null) e.setIsActive(true);
-    if (old != null) {
-      s.same(old.getHotel().getId(), e.getHotel().getId(), "Hotel");
-      for (var stay :
-          dao.query(
-              ReservationRoomEntity.class,
-              "e.roomType.id = :p0 and e.status in ('confirmed','checked_in')",
-              old.getId()))
-        s.require(
-            stay.getAdults() <= e.getMaxAdults()
-                && stay.getChildren() <= e.getMaxChildren()
-                && stay.getAdults() + stay.getChildren() <= e.getMaxOccupancy(),
+    if (roomTypeEntity.getIsActive() == null) roomTypeEntity.setIsActive(true);
+    if (existingRoomType != null) {
+      validationUtil.same(
+          existingRoomType.getHotel().getId(), roomTypeEntity.getHotel().getId(), "Hotel");
+      for (var stay : reservationRoomDao.findActiveByRoomTypeId(existingRoomType.getId()))
+        validationUtil.require(
+            stay.getAdults() <= roomTypeEntity.getMaxAdults()
+                && stay.getChildren() <= roomTypeEntity.getMaxChildren()
+                && stay.getAdults() + stay.getChildren() <= roomTypeEntity.getMaxOccupancy(),
             "New occupancy limits conflict with active bookings");
     }
-  }
-
-  private RoomTypeDTO finish(RoomTypeEntity e, String action) {
-    s.validate(e);
-    s.audit(action, "RoomType", e.getId());
-    dao.flush();
-    return mapper.toDTO(e);
   }
 }

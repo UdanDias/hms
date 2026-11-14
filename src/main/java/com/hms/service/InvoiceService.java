@@ -11,7 +11,7 @@ public interface InvoiceService {
 
   InvoiceDTO addInvoice(InvoiceDTO dto);
 
-  InvoiceDTO updateInvoice(Long id, InvoiceDTO dto);
+  InvoiceDTO updateInvoice(Long invoiceId, InvoiceDTO dto);
 
   InvoiceDTO issueInvoice(Long invoiceId);
 

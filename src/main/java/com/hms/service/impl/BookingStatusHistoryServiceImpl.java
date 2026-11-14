@@ -1,39 +1,47 @@
 package com.hms.service.impl;
 
-import com.hms.dao.HmsDao;
-import com.hms.dto.*;
-import com.hms.entities.*;
-import com.hms.service.*;
-import com.hms.service.impl.support.*;
+import com.hms.dao.BookingStatusHistoryDAO;
+import com.hms.dto.BookingStatusHistoryDTO;
+import com.hms.entities.BookingStatusHistoryEntity;
+import com.hms.exception.BookingStatusHistoryNotFoundException;
+import com.hms.security.ServiceSecurity;
+import com.hms.service.BookingStatusHistoryService;
 import com.hms.util.EntityDTOConvert;
-import java.time.*;
-import java.util.*;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(isolation = Isolation.READ_COMMITTED)
 public class BookingStatusHistoryServiceImpl implements BookingStatusHistoryService {
-  private final HmsDao dao;
-  private final EntityDTOConvert mapper;
-  private final ServiceSupport s;
+  private final BookingStatusHistoryDAO bookingStatusHistoryDao;
+  private final EntityDTOConvert entityDTOConvert;
+  private final ServiceSecurity serviceSecurity;
 
   @Override
+  @Transactional(readOnly = true)
   public BookingStatusHistoryDTO getSelectedBookingStatusHistory(Long bookingStatusHistoryId) {
-    s.actor();
-    var e = dao.require(BookingStatusHistoryEntity.class, bookingStatusHistoryId);
-    s.checkRead(e);
-    return mapper.toDTO(e);
+    serviceSecurity.getCurrentUser();
+    BookingStatusHistoryEntity bookingStatusHistoryEntity =
+        bookingStatusHistoryDao
+            .findById(bookingStatusHistoryId)
+            .orElseThrow(
+                () -> new BookingStatusHistoryNotFoundException("BookingStatusHistory not found"));
+    serviceSecurity.checkRead(bookingStatusHistoryEntity);
+    return entityDTOConvert.convertBookingStatusHistoryEntityToBookingStatusHistoryDTO(
+        bookingStatusHistoryEntity);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<BookingStatusHistoryDTO> getAllBookingStatusHistories() {
-    s.actor();
-    return dao.all(BookingStatusHistoryEntity.class).stream()
-        .filter(s::visible)
-        .map(mapper::toDTO)
-        .toList();
+    serviceSecurity.getCurrentUser();
+    List<BookingStatusHistoryEntity> entities =
+        bookingStatusHistoryDao.findAll().stream().filter(serviceSecurity::canRead).toList();
+    return entityDTOConvert.convertBookingStatusHistoryEntityListToBookingStatusHistoryDTOList(
+        entities);
   }
 }

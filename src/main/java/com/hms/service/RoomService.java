@@ -10,7 +10,7 @@ public interface RoomService {
 
   RoomDTO addRoom(RoomDTO dto);
 
-  RoomDTO updateRoom(Long id, RoomDTO dto);
+  RoomDTO updateRoom(Long roomId, RoomDTO dto);
 
   RoomDTO updateHousekeepingStatus(Long roomId, String status);
 }

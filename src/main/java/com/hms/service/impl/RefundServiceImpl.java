@@ -1,13 +1,23 @@
 package com.hms.service.impl;
 
-import com.hms.dao.HmsDao;
-import com.hms.dto.*;
-import com.hms.entities.*;
-import com.hms.service.*;
-import com.hms.service.impl.support.*;
+import com.hms.dao.HotelDAO;
+import com.hms.dao.PaymentDAO;
+import com.hms.dao.RefundDAO;
+import com.hms.dto.RefundDTO;
+import com.hms.entities.PaymentEntity;
+import com.hms.entities.RefundEntity;
+import com.hms.exception.PaymentNotFoundException;
+import com.hms.exception.RefundNotFoundException;
+import com.hms.security.ServiceSecurity;
+import com.hms.service.RefundService;
+import com.hms.util.AuditRecorder;
 import com.hms.util.EntityDTOConvert;
-import java.time.*;
-import java.util.*;
+import com.hms.util.MoneyUtil;
+import com.hms.util.UtilData;
+import com.hms.util.ValidationUtil;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -15,47 +25,99 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(isolation = Isolation.READ_COMMITTED)
 public class RefundServiceImpl implements RefundService {
-  private final HmsDao dao;
-  private final EntityDTOConvert mapper;
-  private final ServiceSupport s;
-  private final BillingRules billing;
+  private final PaymentDAO paymentDao;
+  private final RefundDAO refundDao;
+  private final HotelDAO hotelDao;
+  private final EntityDTOConvert entityDTOConvert;
+  private final ServiceSecurity serviceSecurity;
+  private final ValidationUtil validationUtil;
+  private final AuditRecorder auditRecorder;
 
   @Override
+  @Transactional(readOnly = true)
   public RefundDTO getSelectedRefund(Long refundId) {
-    s.actor();
-    var e = dao.require(RefundEntity.class, refundId);
-    s.checkRead(e);
-    return mapper.toDTO(e);
+    serviceSecurity.getCurrentUser();
+    RefundEntity refundEntity =
+        refundDao
+            .findById(refundId)
+            .orElseThrow(() -> new RefundNotFoundException("Refund not found"));
+    serviceSecurity.checkRead(refundEntity);
+    return entityDTOConvert.convertRefundEntityToRefundDTO(refundEntity);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<RefundDTO> getAllRefunds() {
-    s.actor();
-    return dao.all(RefundEntity.class).stream().filter(s::visible).map(mapper::toDTO).toList();
+    serviceSecurity.getCurrentUser();
+    List<RefundEntity> entities =
+        refundDao.findAll().stream().filter(serviceSecurity::canRead).toList();
+    return entityDTOConvert.convertRefundEntityListToRefundDTOList(entities);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public RefundDTO addRefund(RefundDTO dto) {
-    s.finance();
-    var e = mapper.toEntity(dto);
-    prepare(e, null);
-    s.validate(e);
-    dao.persist(e);
-    dao.flush();
-    return finish(e, "CREATE");
+  public RefundDTO addRefund(RefundDTO refundDTO) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER", "ACCOUNTANT");
+    hotelDao.lockAllForWrite();
+    RefundEntity refundEntity = entityDTOConvert.convertRefundDTOToRefundEntity(refundDTO);
+    if (refundDTO.getPaymentId() != null) {
+      PaymentEntity payment =
+          paymentDao
+              .findById(refundDTO.getPaymentId())
+              .orElseThrow(() -> new PaymentNotFoundException("Payment not found"));
+      refundEntity.setPayment(payment);
+    }
+
+    validateRefundForSave(refundEntity, null);
+    validationUtil.validate(refundEntity);
+    refundDao.save(refundEntity);
+    auditRecorder.recordAction("CREATE", "Refund", refundEntity.getId());
+    refundDao.flush();
+    return entityDTOConvert.convertRefundEntityToRefundDTO(refundEntity);
   }
 
-  private void prepare(RefundEntity e, RefundEntity old) {
-    billing.prepareRefund(e);
+  private void validateRefundForSave(RefundEntity refundEntity, RefundEntity existingRefund) {
+    validationUtil.require(
+        refundEntity.getPayment() != null
+            && "completed".equals(refundEntity.getPayment().getStatus()),
+        "Completed payment is required");
+    validationUtil.require(
+        !"checked_out".equals(refundEntity.getPayment().getReservation().getStatus()),
+        "Post-checkout adjustments require a credit-note policy");
+    validationUtil.text(refundEntity.getReferenceNumber(), "Unique refund reference/request ID");
+    validationUtil.require(
+        refundDao
+            .findByPaymentIdAndReferenceNumber(
+                refundEntity.getPayment().getId(), refundEntity.getReferenceNumber())
+            .isEmpty(),
+        "Refund reference already recorded; do not retry with a new reference");
+    refundEntity.setAmount(MoneyUtil.positive(refundEntity.getAmount()));
+    validationUtil.require(
+        refundEntity.getAmount().compareTo(calculateNetPayment(refundEntity.getPayment())) <= 0,
+        "Refund exceeds unrefunded payment amount");
+    validationUtil.text(refundEntity.getReason(), "Refund reason");
+    validatePaymentMethod(refundEntity.getRefundMethod());
+    refundEntity.setRefundNumber(UtilData.generateNumber("REF"));
+    refundEntity.setStatus("completed");
+    refundEntity.setRefundedAt(UtilData.generateNow());
+    refundEntity.setProcessedBy(serviceSecurity.getCurrentUser());
   }
 
-  private RefundDTO finish(RefundEntity e, String action) {
-    s.validate(e);
-    s.audit(action, "Refund", e.getId());
-    dao.flush();
-    return mapper.toDTO(e);
+  private BigDecimal calculateNetPayment(PaymentEntity p) {
+    return p.getAmount().subtract(calculateRefundedAmount(p));
+  }
+
+  private void validatePaymentMethod(String method) {
+    validationUtil.require(
+        method != null
+            && Set.of("cash", "card", "bank_transfer", "cheque", "other").contains(method),
+        "Unsupported manual payment/refund method");
+  }
+
+  private BigDecimal calculateRefundedAmount(PaymentEntity p) {
+    return refundDao.findCompletedByPaymentId(p.getId()).stream()
+        .map(RefundEntity::getAmount)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
   }
 }

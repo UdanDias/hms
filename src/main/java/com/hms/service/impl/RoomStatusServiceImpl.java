@@ -1,13 +1,16 @@
 package com.hms.service.impl;
 
-import com.hms.dao.HmsDao;
-import com.hms.dto.*;
-import com.hms.entities.*;
-import com.hms.service.*;
-import com.hms.service.impl.support.*;
+import com.hms.dao.HotelDAO;
+import com.hms.dao.RoomStatusDAO;
+import com.hms.dto.RoomStatusDTO;
+import com.hms.entities.RoomStatusEntity;
+import com.hms.exception.RoomStatusNotFoundException;
+import com.hms.security.ServiceSecurity;
+import com.hms.service.RoomStatusService;
+import com.hms.util.AuditRecorder;
 import com.hms.util.EntityDTOConvert;
-import java.time.*;
-import java.util.*;
+import com.hms.util.ValidationUtil;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -15,46 +18,53 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(isolation = Isolation.READ_COMMITTED)
 public class RoomStatusServiceImpl implements RoomStatusService {
-  private final HmsDao dao;
-  private final EntityDTOConvert mapper;
-  private final ServiceSupport s;
+  private final HotelDAO hotelDao;
+  private final RoomStatusDAO roomStatusDao;
+  private final EntityDTOConvert entityDTOConvert;
+  private final ServiceSecurity serviceSecurity;
+  private final ValidationUtil validationUtil;
+  private final AuditRecorder auditRecorder;
 
   @Override
+  @Transactional(readOnly = true)
   public RoomStatusDTO getSelectedRoomStatus(Long roomStatusId) {
-    s.actor();
-    var e = dao.require(RoomStatusEntity.class, roomStatusId);
-    s.checkRead(e);
-    return mapper.toDTO(e);
+    serviceSecurity.getCurrentUser();
+    RoomStatusEntity roomStatusEntity =
+        roomStatusDao
+            .findById(roomStatusId)
+            .orElseThrow(() -> new RoomStatusNotFoundException("RoomStatus not found"));
+    serviceSecurity.checkRead(roomStatusEntity);
+    return entityDTOConvert.convertRoomStatusEntityToRoomStatusDTO(roomStatusEntity);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<RoomStatusDTO> getAllRoomStatuses() {
-    s.actor();
-    return dao.all(RoomStatusEntity.class).stream().filter(s::visible).map(mapper::toDTO).toList();
+    serviceSecurity.getCurrentUser();
+    List<RoomStatusEntity> entities =
+        roomStatusDao.findAll().stream().filter(serviceSecurity::canRead).toList();
+    return entityDTOConvert.convertRoomStatusEntityListToRoomStatusDTOList(entities);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public RoomStatusDTO addRoomStatus(RoomStatusDTO dto) {
-    s.admin();
-    var e = mapper.toEntity(dto);
-    prepare(e, null);
-    s.validate(e);
-    dao.persist(e);
-    dao.flush();
-    return finish(e, "CREATE");
+  public RoomStatusDTO addRoomStatus(RoomStatusDTO roomStatusDTO) {
+    serviceSecurity.requireRoles("ADMIN");
+    hotelDao.lockAllForWrite();
+    RoomStatusEntity roomStatusEntity =
+        entityDTOConvert.convertRoomStatusDTOToRoomStatusEntity(roomStatusDTO);
+
+    validateRoomStatusForSave(roomStatusEntity, null);
+    validationUtil.validate(roomStatusEntity);
+    roomStatusDao.save(roomStatusEntity);
+    auditRecorder.recordAction("CREATE", "RoomStatus", roomStatusEntity.getStatusId());
+    roomStatusDao.flush();
+    return entityDTOConvert.convertRoomStatusEntityToRoomStatusDTO(roomStatusEntity);
   }
 
-  private void prepare(RoomStatusEntity e, RoomStatusEntity old) {
-    s.require(e.getStatus() != null, "Room status is required");
-  }
-
-  private RoomStatusDTO finish(RoomStatusEntity e, String action) {
-    s.validate(e);
-    s.audit(action, "RoomStatus", e.getStatusId());
-    dao.flush();
-    return mapper.toDTO(e);
+  private void validateRoomStatusForSave(
+      RoomStatusEntity roomStatusEntity, RoomStatusEntity existingRoomStatus) {
+    validationUtil.require(roomStatusEntity.getStatus() != null, "Room status is required");
   }
 }

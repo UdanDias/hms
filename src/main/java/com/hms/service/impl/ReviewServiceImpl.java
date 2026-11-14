@@ -1,135 +1,218 @@
 package com.hms.service.impl;
 
-import com.hms.dao.HmsDao;
-import com.hms.dto.*;
-import com.hms.entities.*;
-import com.hms.service.*;
-import com.hms.service.impl.support.*;
+import com.hms.dao.CustomerDAO;
+import com.hms.dao.HotelDAO;
+import com.hms.dao.ReservationDAO;
+import com.hms.dao.ReviewDAO;
+import com.hms.dto.ReviewDTO;
+import com.hms.entities.CustomerEntity;
+import com.hms.entities.ReservationEntity;
+import com.hms.entities.ReviewEntity;
+import com.hms.exception.CustomerNotFoundException;
+import com.hms.exception.ReservationNotFoundException;
+import com.hms.exception.ReviewNotFoundException;
+import com.hms.security.ServiceSecurity;
+import com.hms.service.ReviewService;
+import com.hms.util.AuditRecorder;
 import com.hms.util.EntityDTOConvert;
-import java.time.*;
-import java.util.*;
+import com.hms.util.UtilData;
+import com.hms.util.ValidationUtil;
+import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(isolation = Isolation.READ_COMMITTED)
 public class ReviewServiceImpl implements ReviewService {
-  private final HmsDao dao;
-  private final EntityDTOConvert mapper;
-  private final ServiceSupport s;
+  private final CustomerDAO customerDao;
+  private final ReviewDAO reviewDao;
+  private final ReservationDAO reservationDao;
+  private final HotelDAO hotelDao;
+  private final EntityDTOConvert entityDTOConvert;
+  private final ServiceSecurity serviceSecurity;
+  private final ValidationUtil validationUtil;
+  private final AuditRecorder auditRecorder;
 
   @Override
+  @Transactional(readOnly = true)
   public ReviewDTO getSelectedReview(Long reviewId) {
-    s.actor();
-    var e = dao.require(ReviewEntity.class, reviewId);
-    s.checkRead(e);
-    return mapper.toDTO(e);
+    serviceSecurity.getCurrentUser();
+    ReviewEntity reviewEntity =
+        reviewDao
+            .findById(reviewId)
+            .orElseThrow(() -> new ReviewNotFoundException("Review not found"));
+    serviceSecurity.checkRead(reviewEntity);
+    return entityDTOConvert.convertReviewEntityToReviewDTO(reviewEntity);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<ReviewDTO> getAllReviews() {
-    s.actor();
-    return dao.all(ReviewEntity.class).stream().filter(s::visible).map(mapper::toDTO).toList();
+    serviceSecurity.getCurrentUser();
+    List<ReviewEntity> entities =
+        reviewDao.findAll().stream().filter(serviceSecurity::canRead).toList();
+    return entityDTOConvert.convertReviewEntityListToReviewDTOList(entities);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public ReviewDTO addReview(ReviewDTO dto) {
-    s.allow("ADMIN", "MANAGER", "RECEPTIONIST", "GUEST");
-    dao.lockHotels();
-    var e = mapper.toEntity(dto);
-    prepare(e, null);
-    s.validate(e);
-    dao.persist(e);
-    dao.flush();
-    return finish(e, "CREATE");
-  }
-
-  @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public ReviewDTO updateReview(Long id, ReviewDTO dto) {
-    s.allow("ADMIN", "MANAGER", "RECEPTIONIST", "GUEST");
-    dao.lockHotels();
-    var old = dao.require(ReviewEntity.class, id);
-    var e = mapper.toEntity(dto);
-    prepare(e, old);
-    s.validate(e);
-    BeanUtils.copyProperties(e, old, "id", "createdAt", "updatedAt");
-    return finish(old, "UPDATE");
-  }
-
-  @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public void deleteReview(Long id) {
-    s.allow("ADMIN", "MANAGER", "RECEPTIONIST", "GUEST");
-    dao.lockHotels();
-    var e = dao.require(ReviewEntity.class, id);
-    s.reviewOwner(e.getCustomer());
-    s.audit("DELETE", "Review", id);
-    dao.remove(e);
-    dao.flush();
-  }
-
-  private void prepare(ReviewEntity e, ReviewEntity old) {
-    if (e.getComment() == null) e.setComment("");
-    s.require(
-        e.getReservation() != null && e.getCustomer() != null,
-        "Reservation and customer are required");
-    s.reviewOwner(e.getCustomer());
-    s.require(
-        "checked_out".equals(e.getReservation().getStatus()), "Reviews require a completed stay");
-    s.same(
-        e.getReservation().getBookerCustomer().getId(), e.getCustomer().getId(), "Review customer");
-    s.require(
-        e.getRating() != null && e.getRating() >= 1 && e.getRating() <= 5,
-        "Rating must be between 1 and 5");
-    if (old != null) {
-      s.same(old.getReservation().getId(), e.getReservation().getId(), "Reservation");
-      s.same(old.getCustomer().getId(), e.getCustomer().getId(), "Customer");
+  public ReviewDTO addReview(ReviewDTO reviewDTO) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST", "GUEST");
+    hotelDao.lockAllForWrite();
+    ReviewEntity reviewEntity = entityDTOConvert.convertReviewDTOToReviewEntity(reviewDTO);
+    if (reviewDTO.getReservationId() != null) {
+      ReservationEntity reservation =
+          reservationDao
+              .findById(reviewDTO.getReservationId())
+              .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+      reviewEntity.setReservation(reservation);
     }
-    e.setModerationStatus("pending");
-    e.setModeratedBy(null);
-    e.setModeratedAt(null);
-    e.setManagementReply(old == null ? null : old.getManagementReply());
-    e.setRepliedBy(old == null ? null : old.getRepliedBy());
-    e.setRepliedAt(old == null ? null : old.getRepliedAt());
+    if (reviewDTO.getCustomerId() != null) {
+      CustomerEntity customer =
+          customerDao
+              .findById(reviewDTO.getCustomerId())
+              .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
+      reviewEntity.setCustomer(customer);
+    }
+
+    validateReviewForSave(reviewEntity, null);
+    validationUtil.validate(reviewEntity);
+    reviewDao.save(reviewEntity);
+    auditRecorder.recordAction("CREATE", "Review", reviewEntity.getId());
+    reviewDao.flush();
+    return entityDTOConvert.convertReviewEntityToReviewDTO(reviewEntity);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
+  public ReviewDTO updateReview(Long reviewId, ReviewDTO reviewDTO) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST", "GUEST");
+    hotelDao.lockAllForWrite();
+    ReviewEntity reviewEntity =
+        reviewDao
+            .findById(reviewId)
+            .orElseThrow(() -> new ReviewNotFoundException("Review not found"));
+    ReviewEntity requestedReview = entityDTOConvert.convertReviewDTOToReviewEntity(reviewDTO);
+    if (reviewDTO.getReservationId() != null) {
+      ReservationEntity reservation =
+          reservationDao
+              .findById(reviewDTO.getReservationId())
+              .orElseThrow(() -> new ReservationNotFoundException("Reservation not found"));
+      requestedReview.setReservation(reservation);
+    }
+    if (reviewDTO.getCustomerId() != null) {
+      CustomerEntity customer =
+          customerDao
+              .findById(reviewDTO.getCustomerId())
+              .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
+      requestedReview.setCustomer(customer);
+    }
+
+    validateReviewForSave(requestedReview, reviewEntity);
+    validationUtil.validate(requestedReview);
+    reviewEntity.setReservation(requestedReview.getReservation());
+    reviewEntity.setCustomer(requestedReview.getCustomer());
+    reviewEntity.setRating(requestedReview.getRating());
+    reviewEntity.setTitle(requestedReview.getTitle());
+    reviewEntity.setComment(requestedReview.getComment());
+    reviewEntity.setModerationStatus(requestedReview.getModerationStatus());
+    reviewEntity.setModeratedBy(requestedReview.getModeratedBy());
+    reviewEntity.setModeratedAt(requestedReview.getModeratedAt());
+    reviewEntity.setManagementReply(requestedReview.getManagementReply());
+    reviewEntity.setRepliedBy(requestedReview.getRepliedBy());
+    reviewEntity.setRepliedAt(requestedReview.getRepliedAt());
+    validationUtil.validate(reviewEntity);
+    reviewDao.save(reviewEntity);
+    auditRecorder.recordAction("UPDATE", "Review", reviewEntity.getId());
+    reviewDao.flush();
+    return entityDTOConvert.convertReviewEntityToReviewDTO(reviewEntity);
+  }
+
+  @Override
+  public void deleteReview(Long reviewId) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST", "GUEST");
+    hotelDao.lockAllForWrite();
+    ReviewEntity reviewEntity =
+        reviewDao
+            .findById(reviewId)
+            .orElseThrow(() -> new ReviewNotFoundException("Review not found"));
+    serviceSecurity.checkReviewOwner(reviewEntity.getCustomer());
+    auditRecorder.recordAction("DELETE", "Review", reviewId);
+    reviewDao.delete(reviewEntity);
+    reviewDao.flush();
+  }
+
+  private void validateReviewForSave(ReviewEntity reviewEntity, ReviewEntity existingReview) {
+    if (reviewEntity.getComment() == null) reviewEntity.setComment("");
+    validationUtil.require(
+        reviewEntity.getReservation() != null && reviewEntity.getCustomer() != null,
+        "Reservation and customer are required");
+    serviceSecurity.checkReviewOwner(reviewEntity.getCustomer());
+    validationUtil.require(
+        "checked_out".equals(reviewEntity.getReservation().getStatus()),
+        "Reviews require a completed stay");
+    validationUtil.same(
+        reviewEntity.getReservation().getBookerCustomer().getId(),
+        reviewEntity.getCustomer().getId(),
+        "Review customer");
+    validationUtil.require(
+        reviewEntity.getRating() != null
+            && reviewEntity.getRating() >= 1
+            && reviewEntity.getRating() <= 5,
+        "Rating must be between 1 and 5");
+    if (existingReview != null) {
+      validationUtil.same(
+          existingReview.getReservation().getId(),
+          reviewEntity.getReservation().getId(),
+          "Reservation");
+      validationUtil.same(
+          existingReview.getCustomer().getId(), reviewEntity.getCustomer().getId(), "Customer");
+    }
+    reviewEntity.setModerationStatus("pending");
+    reviewEntity.setModeratedBy(null);
+    reviewEntity.setModeratedAt(null);
+    reviewEntity.setManagementReply(
+        existingReview == null ? null : existingReview.getManagementReply());
+    reviewEntity.setRepliedBy(existingReview == null ? null : existingReview.getRepliedBy());
+    reviewEntity.setRepliedAt(existingReview == null ? null : existingReview.getRepliedAt());
+  }
+
+  @Override
   public ReviewDTO moderateReview(Long reviewId, String moderationStatus) {
-    s.allow("ADMIN", "MANAGER");
-    dao.lockHotels();
-    s.require(
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    validationUtil.require(
         Set.of("approved", "rejected").contains(moderationStatus), "Use approved or rejected");
-    var e = dao.require(ReviewEntity.class, reviewId);
-    e.setModerationStatus(moderationStatus);
-    e.setModeratedBy(s.actor());
-    e.setModeratedAt(s.now());
-    return finish(e, "MODERATE");
+    ReviewEntity reviewEntity =
+        reviewDao
+            .findById(reviewId)
+            .orElseThrow(() -> new ReviewNotFoundException("Review not found"));
+    reviewEntity.setModerationStatus(moderationStatus);
+    reviewEntity.setModeratedBy(serviceSecurity.getCurrentUser());
+    reviewEntity.setModeratedAt(UtilData.generateNow());
+    validationUtil.validate(reviewEntity);
+    auditRecorder.recordAction("MODERATE", "Review", reviewEntity.getId());
+    reviewDao.flush();
+    return entityDTOConvert.convertReviewEntityToReviewDTO(reviewEntity);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
   public ReviewDTO replyToReview(Long reviewId, String reply) {
-    s.allow("ADMIN", "MANAGER");
-    dao.lockHotels();
-    s.text(reply, "Management reply");
-    var e = dao.require(ReviewEntity.class, reviewId);
-    e.setManagementReply(reply);
-    e.setRepliedBy(s.actor());
-    e.setRepliedAt(s.now());
-    return finish(e, "REPLY");
-  }
-
-  private ReviewDTO finish(ReviewEntity e, String action) {
-    s.validate(e);
-    s.audit(action, "Review", e.getId());
-    dao.flush();
-    return mapper.toDTO(e);
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    validationUtil.text(reply, "Management reply");
+    ReviewEntity reviewEntity =
+        reviewDao
+            .findById(reviewId)
+            .orElseThrow(() -> new ReviewNotFoundException("Review not found"));
+    reviewEntity.setManagementReply(reply);
+    reviewEntity.setRepliedBy(serviceSecurity.getCurrentUser());
+    reviewEntity.setRepliedAt(UtilData.generateNow());
+    validationUtil.validate(reviewEntity);
+    auditRecorder.recordAction("REPLY", "Review", reviewEntity.getId());
+    reviewDao.flush();
+    return entityDTOConvert.convertReviewEntityToReviewDTO(reviewEntity);
   }
 }

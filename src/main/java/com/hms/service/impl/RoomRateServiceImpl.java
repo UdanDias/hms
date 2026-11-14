@@ -1,94 +1,143 @@
 package com.hms.service.impl;
 
-import com.hms.dao.HmsDao;
-import com.hms.dto.*;
-import com.hms.entities.*;
-import com.hms.service.*;
-import com.hms.service.impl.support.*;
+import com.hms.dao.HotelDAO;
+import com.hms.dao.RoomRateDAO;
+import com.hms.dao.RoomTypeDAO;
+import com.hms.dto.RoomRateDTO;
+import com.hms.entities.RoomRateEntity;
+import com.hms.entities.RoomTypeEntity;
+import com.hms.exception.RoomRateNotFoundException;
+import com.hms.exception.RoomTypeNotFoundException;
+import com.hms.security.ServiceSecurity;
+import com.hms.service.RoomRateService;
+import com.hms.util.AuditRecorder;
 import com.hms.util.EntityDTOConvert;
-import java.time.*;
-import java.util.*;
+import com.hms.util.MoneyUtil;
+import com.hms.util.ValidationUtil;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(isolation = Isolation.READ_COMMITTED)
 public class RoomRateServiceImpl implements RoomRateService {
-  private final HmsDao dao;
-  private final EntityDTOConvert mapper;
-  private final ServiceSupport s;
+  private final HotelDAO hotelDao;
+  private final RoomTypeDAO roomTypeDao;
+  private final RoomRateDAO roomRateDao;
+  private final EntityDTOConvert entityDTOConvert;
+  private final ServiceSecurity serviceSecurity;
+  private final ValidationUtil validationUtil;
+  private final AuditRecorder auditRecorder;
 
   @Override
+  @Transactional(readOnly = true)
   public RoomRateDTO getSelectedRoomRate(Long roomRateId) {
-    s.actor();
-    var e = dao.require(RoomRateEntity.class, roomRateId);
-    s.checkRead(e);
-    return mapper.toDTO(e);
+    serviceSecurity.getCurrentUser();
+    RoomRateEntity roomRateEntity =
+        roomRateDao
+            .findById(roomRateId)
+            .orElseThrow(() -> new RoomRateNotFoundException("RoomRate not found"));
+    serviceSecurity.checkRead(roomRateEntity);
+    return entityDTOConvert.convertRoomRateEntityToRoomRateDTO(roomRateEntity);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<RoomRateDTO> getAllRoomRates() {
-    s.actor();
-    return dao.all(RoomRateEntity.class).stream().filter(s::visible).map(mapper::toDTO).toList();
+    serviceSecurity.getCurrentUser();
+    List<RoomRateEntity> entities =
+        roomRateDao.findAll().stream().filter(serviceSecurity::canRead).toList();
+    return entityDTOConvert.convertRoomRateEntityListToRoomRateDTOList(entities);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public RoomRateDTO addRoomRate(RoomRateDTO dto) {
-    s.allow("ADMIN", "MANAGER");
-    dao.lockHotels();
-    var e = mapper.toEntity(dto);
-    prepare(e, null);
-    s.validate(e);
-    dao.persist(e);
-    dao.flush();
-    return finish(e, "CREATE");
+  public RoomRateDTO addRoomRate(RoomRateDTO roomRateDTO) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    RoomRateEntity roomRateEntity =
+        entityDTOConvert.convertRoomRateDTOToRoomRateEntity(roomRateDTO);
+    if (roomRateDTO.getRoomTypeId() != null) {
+      RoomTypeEntity roomType =
+          roomTypeDao
+              .findById(roomRateDTO.getRoomTypeId())
+              .orElseThrow(() -> new RoomTypeNotFoundException("RoomType not found"));
+      roomRateEntity.setRoomType(roomType);
+    }
+
+    validateRoomRateForSave(roomRateEntity, null);
+    validationUtil.validate(roomRateEntity);
+    roomRateDao.save(roomRateEntity);
+    auditRecorder.recordAction("CREATE", "RoomRate", roomRateEntity.getId());
+    roomRateDao.flush();
+    return entityDTOConvert.convertRoomRateEntityToRoomRateDTO(roomRateEntity);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public RoomRateDTO updateRoomRate(Long id, RoomRateDTO dto) {
-    s.allow("ADMIN", "MANAGER");
-    dao.lockHotels();
-    var old = dao.require(RoomRateEntity.class, id);
-    var e = mapper.toEntity(dto);
-    prepare(e, old);
-    s.validate(e);
-    BeanUtils.copyProperties(e, old, "id", "createdAt", "updatedAt");
-    return finish(old, "UPDATE");
+  public RoomRateDTO updateRoomRate(Long roomRateId, RoomRateDTO roomRateDTO) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    RoomRateEntity roomRateEntity =
+        roomRateDao
+            .findById(roomRateId)
+            .orElseThrow(() -> new RoomRateNotFoundException("RoomRate not found"));
+    RoomRateEntity requestedRoomRate =
+        entityDTOConvert.convertRoomRateDTOToRoomRateEntity(roomRateDTO);
+    if (roomRateDTO.getRoomTypeId() != null) {
+      RoomTypeEntity roomType =
+          roomTypeDao
+              .findById(roomRateDTO.getRoomTypeId())
+              .orElseThrow(() -> new RoomTypeNotFoundException("RoomType not found"));
+      requestedRoomRate.setRoomType(roomType);
+    }
+
+    validateRoomRateForSave(requestedRoomRate, roomRateEntity);
+    validationUtil.validate(requestedRoomRate);
+    roomRateEntity.setRoomType(requestedRoomRate.getRoomType());
+    roomRateEntity.setStayDate(requestedRoomRate.getStayDate());
+    roomRateEntity.setNightlyRate(requestedRoomRate.getNightlyRate());
+    roomRateEntity.setExtraAdultRate(requestedRoomRate.getExtraAdultRate());
+    roomRateEntity.setExtraChildRate(requestedRoomRate.getExtraChildRate());
+    roomRateEntity.setMinimumNights(requestedRoomRate.getMinimumNights());
+    roomRateEntity.setStopSell(requestedRoomRate.getStopSell());
+    validationUtil.validate(roomRateEntity);
+    roomRateDao.save(roomRateEntity);
+    auditRecorder.recordAction("UPDATE", "RoomRate", roomRateEntity.getId());
+    roomRateDao.flush();
+    return entityDTOConvert.convertRoomRateEntityToRoomRateDTO(roomRateEntity);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public void deleteRoomRate(Long id) {
-    s.allow("ADMIN", "MANAGER");
-    dao.lockHotels();
-    var e = dao.require(RoomRateEntity.class, id);
-    s.audit("DELETE", "RoomRate", id);
-    dao.remove(e);
-    dao.flush();
+  public void deleteRoomRate(Long roomRateId) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    RoomRateEntity roomRateEntity =
+        roomRateDao
+            .findById(roomRateId)
+            .orElseThrow(() -> new RoomRateNotFoundException("RoomRate not found"));
+    auditRecorder.recordAction("DELETE", "RoomRate", roomRateId);
+    roomRateDao.delete(roomRateEntity);
+    roomRateDao.flush();
   }
 
-  private void prepare(RoomRateEntity e, RoomRateEntity old) {
-    s.require(
-        e.getRoomType() != null && e.getStayDate() != null, "Room type and stay date are required");
-    e.setNightlyRate(s.nonnegative(e.getNightlyRate()));
-    e.setExtraAdultRate(s.nonnegative(e.getExtraAdultRate()));
-    e.setExtraChildRate(s.nonnegative(e.getExtraChildRate()));
-    if (e.getMinimumNights() == null) e.setMinimumNights(1);
-    s.require(e.getMinimumNights() >= 1, "Minimum nights must be positive");
-    if (e.getStopSell() == null) e.setStopSell(false);
-    if (old != null) s.same(old.getRoomType().getId(), e.getRoomType().getId(), "Room type");
-  }
-
-  private RoomRateDTO finish(RoomRateEntity e, String action) {
-    s.validate(e);
-    s.audit(action, "RoomRate", e.getId());
-    dao.flush();
-    return mapper.toDTO(e);
+  private void validateRoomRateForSave(
+      RoomRateEntity roomRateEntity, RoomRateEntity existingRoomRate) {
+    validationUtil.require(
+        roomRateEntity.getRoomType() != null && roomRateEntity.getStayDate() != null,
+        "Room type and stay date are required");
+    roomRateEntity.setNightlyRate(MoneyUtil.nonnegative(roomRateEntity.getNightlyRate()));
+    roomRateEntity.setExtraAdultRate(MoneyUtil.nonnegative(roomRateEntity.getExtraAdultRate()));
+    roomRateEntity.setExtraChildRate(MoneyUtil.nonnegative(roomRateEntity.getExtraChildRate()));
+    if (roomRateEntity.getMinimumNights() == null) roomRateEntity.setMinimumNights(1);
+    validationUtil.require(
+        roomRateEntity.getMinimumNights() >= 1, "Minimum nights must be positive");
+    if (roomRateEntity.getStopSell() == null) roomRateEntity.setStopSell(false);
+    if (existingRoomRate != null)
+      validationUtil.same(
+          existingRoomRate.getRoomType().getId(),
+          roomRateEntity.getRoomType().getId(),
+          "Room type");
   }
 }

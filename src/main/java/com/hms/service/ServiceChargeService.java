@@ -10,7 +10,7 @@ public interface ServiceChargeService {
 
   ServiceChargeDTO addServiceCharge(ServiceChargeDTO dto);
 
-  ServiceChargeDTO updateServiceCharge(Long id, ServiceChargeDTO dto);
+  ServiceChargeDTO updateServiceCharge(Long serviceChargeId, ServiceChargeDTO dto);
 
   ServiceChargeDTO voidServiceCharge(Long serviceChargeId);
 }

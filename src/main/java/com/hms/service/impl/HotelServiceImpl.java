@@ -1,89 +1,112 @@
 package com.hms.service.impl;
 
-import com.hms.dao.HmsDao;
-import com.hms.dto.*;
-import com.hms.entities.*;
-import com.hms.service.*;
-import com.hms.service.impl.support.*;
+import com.hms.dao.HotelDAO;
+import com.hms.dao.ReservationDAO;
+import com.hms.dto.HotelDTO;
+import com.hms.entities.HotelEntity;
+import com.hms.exception.HotelNotFoundException;
+import com.hms.security.ServiceSecurity;
+import com.hms.service.HotelService;
+import com.hms.util.AuditRecorder;
 import com.hms.util.EntityDTOConvert;
-import java.time.*;
-import java.util.*;
+import com.hms.util.ValidationUtil;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(isolation = Isolation.READ_COMMITTED)
 public class HotelServiceImpl implements HotelService {
-  private final HmsDao dao;
-  private final EntityDTOConvert mapper;
-  private final ServiceSupport s;
+  private final ReservationDAO reservationDao;
+  private final HotelDAO hotelDao;
+  private final EntityDTOConvert entityDTOConvert;
+  private final ServiceSecurity serviceSecurity;
+  private final ValidationUtil validationUtil;
+  private final AuditRecorder auditRecorder;
 
   @Override
+  @Transactional(readOnly = true)
   public HotelDTO getSelectedHotel(Long hotelId) {
-    s.actor();
-    var e = dao.require(HotelEntity.class, hotelId);
-    s.checkRead(e);
-    return mapper.toDTO(e);
+    serviceSecurity.getCurrentUser();
+    HotelEntity hotelEntity =
+        hotelDao.findById(hotelId).orElseThrow(() -> new HotelNotFoundException("Hotel not found"));
+    serviceSecurity.checkRead(hotelEntity);
+    return entityDTOConvert.convertHotelEntityToHotelDTO(hotelEntity);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<HotelDTO> getAllHotels() {
-    s.actor();
-    return dao.all(HotelEntity.class).stream().filter(s::visible).map(mapper::toDTO).toList();
+    serviceSecurity.getCurrentUser();
+    List<HotelEntity> entities =
+        hotelDao.findAll().stream().filter(serviceSecurity::canRead).toList();
+    return entityDTOConvert.convertHotelEntityListToHotelDTOList(entities);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public HotelDTO addHotel(HotelDTO dto) {
-    s.allow("ADMIN", "MANAGER");
-    dao.lockHotels();
-    var e = mapper.toEntity(dto);
-    prepare(e, null);
-    s.validate(e);
-    dao.persist(e);
-    dao.flush();
-    return finish(e, "CREATE");
+  public HotelDTO addHotel(HotelDTO hotelDTO) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    HotelEntity hotelEntity = entityDTOConvert.convertHotelDTOToHotelEntity(hotelDTO);
+
+    validateHotelForSave(hotelEntity, null);
+    validationUtil.validate(hotelEntity);
+    hotelDao.save(hotelEntity);
+    auditRecorder.recordAction("CREATE", "Hotel", hotelEntity.getId());
+    hotelDao.flush();
+    return entityDTOConvert.convertHotelEntityToHotelDTO(hotelEntity);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public HotelDTO updateHotel(Long id, HotelDTO dto) {
-    s.allow("ADMIN", "MANAGER");
-    dao.lockHotels();
-    var old = dao.require(HotelEntity.class, id);
-    var e = mapper.toEntity(dto);
-    prepare(e, old);
-    s.validate(e);
-    BeanUtils.copyProperties(e, old, "id", "createdAt", "updatedAt");
-    return finish(old, "UPDATE");
+  public HotelDTO updateHotel(Long hotelId, HotelDTO hotelDTO) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    HotelEntity hotelEntity =
+        hotelDao.findById(hotelId).orElseThrow(() -> new HotelNotFoundException("Hotel not found"));
+    HotelEntity requestedHotel = entityDTOConvert.convertHotelDTOToHotelEntity(hotelDTO);
+
+    validateHotelForSave(requestedHotel, hotelEntity);
+    validationUtil.validate(requestedHotel);
+    hotelEntity.setName(requestedHotel.getName());
+    hotelEntity.setAddress(requestedHotel.getAddress());
+    hotelEntity.setCity(requestedHotel.getCity());
+    hotelEntity.setCountryCode(requestedHotel.getCountryCode());
+    hotelEntity.setPhone(requestedHotel.getPhone());
+    hotelEntity.setEmail(requestedHotel.getEmail());
+    hotelEntity.setTimezone(requestedHotel.getTimezone());
+    hotelEntity.setCurrencyCode(requestedHotel.getCurrencyCode());
+    hotelEntity.setCheckInTime(requestedHotel.getCheckInTime());
+    hotelEntity.setCheckOutTime(requestedHotel.getCheckOutTime());
+    hotelEntity.setIsActive(requestedHotel.getIsActive());
+    validationUtil.validate(hotelEntity);
+    hotelDao.save(hotelEntity);
+    auditRecorder.recordAction("UPDATE", "Hotel", hotelEntity.getId());
+    hotelDao.flush();
+    return entityDTOConvert.convertHotelEntityToHotelDTO(hotelEntity);
   }
 
-  private void prepare(HotelEntity e, HotelEntity old) {
-    s.text(e.getName(), "Hotel name");
-    s.text(e.getTimezone(), "Hotel timezone");
-    ZoneId.of(e.getTimezone());
-    s.text(e.getCurrencyCode(), "Currency");
-    e.setCurrencyCode(e.getCurrencyCode().toUpperCase(Locale.ROOT));
-    java.util.Currency.getInstance(e.getCurrencyCode());
-    s.require(
+  private void validateHotelForSave(HotelEntity hotelEntity, HotelEntity existingHotel) {
+    validationUtil.text(hotelEntity.getName(), "Hotel name");
+    validationUtil.text(hotelEntity.getTimezone(), "Hotel timezone");
+    ZoneId.of(hotelEntity.getTimezone());
+    validationUtil.text(hotelEntity.getCurrencyCode(), "Currency");
+    hotelEntity.setCurrencyCode(hotelEntity.getCurrencyCode().toUpperCase(Locale.ROOT));
+    java.util.Currency.getInstance(hotelEntity.getCurrencyCode());
+    validationUtil.require(
         Set.of("USD", "EUR", "GBP", "LKR", "AUD", "CAD", "INR", "NZD", "SGD", "AED")
-            .contains(e.getCurrencyCode()),
+            .contains(hotelEntity.getCurrencyCode()),
         "This two-decimal money model currently supports USD/EUR/GBP/LKR/AUD/CAD/INR/NZD/SGD/AED");
-    if (e.getIsActive() == null) e.setIsActive(true);
-    if (old != null && !old.getCurrencyCode().equals(e.getCurrencyCode()))
-      s.require(
-          dao.query(ReservationEntity.class, "e.hotel.id = :p0", old.getId()).isEmpty(),
+    if (hotelEntity.getIsActive() == null) hotelEntity.setIsActive(true);
+    if (existingHotel != null
+        && !existingHotel.getCurrencyCode().equals(hotelEntity.getCurrencyCode()))
+      validationUtil.require(
+          reservationDao.findByHotelId(existingHotel.getId()).isEmpty(),
           "Currency cannot change after bookings exist");
-  }
-
-  private HotelDTO finish(HotelEntity e, String action) {
-    s.validate(e);
-    s.audit(action, "Hotel", e.getId());
-    dao.flush();
-    return mapper.toDTO(e);
   }
 }

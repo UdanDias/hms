@@ -10,5 +10,5 @@ public interface HotelService {
 
   HotelDTO addHotel(HotelDTO dto);
 
-  HotelDTO updateHotel(Long id, HotelDTO dto);
+  HotelDTO updateHotel(Long hotelId, HotelDTO dto);
 }

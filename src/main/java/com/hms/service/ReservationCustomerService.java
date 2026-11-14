@@ -10,7 +10,8 @@ public interface ReservationCustomerService {
 
   ReservationCustomerDTO addReservationCustomer(ReservationCustomerDTO dto);
 
-  ReservationCustomerDTO updateReservationCustomer(Long id, ReservationCustomerDTO dto);
+  ReservationCustomerDTO updateReservationCustomer(
+      Long reservationCustomerId, ReservationCustomerDTO dto);
 
-  void deleteReservationCustomer(Long id);
+  void deleteReservationCustomer(Long reservationCustomerId);
 }

@@ -10,7 +10,7 @@ public interface InvoiceItemService {
 
   InvoiceItemDTO addInvoiceItem(InvoiceItemDTO dto);
 
-  InvoiceItemDTO updateInvoiceItem(Long id, InvoiceItemDTO dto);
+  InvoiceItemDTO updateInvoiceItem(Long invoiceItemId, InvoiceItemDTO dto);
 
-  void deleteInvoiceItem(Long id);
+  void deleteInvoiceItem(Long invoiceItemId);
 }

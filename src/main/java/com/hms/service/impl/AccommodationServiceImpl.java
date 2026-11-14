@@ -1,86 +1,123 @@
 package com.hms.service.impl;
 
-import com.hms.dao.HmsDao;
-import com.hms.dto.*;
-import com.hms.entities.*;
-import com.hms.service.*;
-import com.hms.service.impl.support.*;
+import com.hms.dao.AccommodationDAO;
+import com.hms.dao.HotelDAO;
+import com.hms.dto.AccommodationDTO;
+import com.hms.entities.AccommodationEntity;
+import com.hms.entities.HotelEntity;
+import com.hms.exception.AccommodationNotFoundException;
+import com.hms.exception.HotelNotFoundException;
+import com.hms.security.ServiceSecurity;
+import com.hms.service.AccommodationService;
+import com.hms.util.AuditRecorder;
 import com.hms.util.EntityDTOConvert;
-import java.time.*;
-import java.util.*;
+import com.hms.util.MoneyUtil;
+import com.hms.util.ValidationUtil;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(isolation = Isolation.READ_COMMITTED)
 public class AccommodationServiceImpl implements AccommodationService {
-  private final HmsDao dao;
-  private final EntityDTOConvert mapper;
-  private final ServiceSupport s;
+  private final HotelDAO hotelDao;
+  private final AccommodationDAO accommodationDao;
+  private final EntityDTOConvert entityDTOConvert;
+  private final ServiceSecurity serviceSecurity;
+  private final ValidationUtil validationUtil;
+  private final AuditRecorder auditRecorder;
 
   @Override
+  @Transactional(readOnly = true)
   public AccommodationDTO getSelectedAccommodation(Long accommodationId) {
-    s.actor();
-    var e = dao.require(AccommodationEntity.class, accommodationId);
-    s.checkRead(e);
-    return mapper.toDTO(e);
+    serviceSecurity.getCurrentUser();
+    AccommodationEntity accommodationEntity =
+        accommodationDao
+            .findById(accommodationId)
+            .orElseThrow(() -> new AccommodationNotFoundException("Accommodation not found"));
+    serviceSecurity.checkRead(accommodationEntity);
+    return entityDTOConvert.convertAccommodationEntityToAccommodationDTO(accommodationEntity);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<AccommodationDTO> getAllAccommodations() {
-    s.actor();
-    return dao.all(AccommodationEntity.class).stream()
-        .filter(s::visible)
-        .map(mapper::toDTO)
-        .toList();
+    serviceSecurity.getCurrentUser();
+    List<AccommodationEntity> entities =
+        accommodationDao.findAll().stream().filter(serviceSecurity::canRead).toList();
+    return entityDTOConvert.convertAccommodationEntityListToAccommodationDTOList(entities);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public AccommodationDTO addAccommodation(AccommodationDTO dto) {
-    s.allow("ADMIN", "MANAGER");
-    dao.lockHotels();
-    var e = mapper.toEntity(dto);
-    prepare(e, null);
-    s.validate(e);
-    dao.persist(e);
-    dao.flush();
-    return finish(e, "CREATE");
+  public AccommodationDTO addAccommodation(AccommodationDTO accommodationDTO) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    AccommodationEntity accommodationEntity =
+        entityDTOConvert.convertAccommodationDTOToAccommodationEntity(accommodationDTO);
+    if (accommodationDTO.getHotelId() != null) {
+      HotelEntity hotel =
+          hotelDao
+              .findById(accommodationDTO.getHotelId())
+              .orElseThrow(() -> new HotelNotFoundException("Hotel not found"));
+      accommodationEntity.setHotel(hotel);
+    }
+
+    validateAccommodationForSave(accommodationEntity, null);
+    validationUtil.validate(accommodationEntity);
+    accommodationDao.save(accommodationEntity);
+    auditRecorder.recordAction("CREATE", "Accommodation", accommodationEntity.getId());
+    accommodationDao.flush();
+    return entityDTOConvert.convertAccommodationEntityToAccommodationDTO(accommodationEntity);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public AccommodationDTO updateAccommodation(Long id, AccommodationDTO dto) {
-    s.allow("ADMIN", "MANAGER");
-    dao.lockHotels();
-    var old = dao.require(AccommodationEntity.class, id);
-    var e = mapper.toEntity(dto);
-    prepare(e, old);
-    s.validate(e);
-    BeanUtils.copyProperties(e, old, "id", "createdAt", "updatedAt");
-    return finish(old, "UPDATE");
+  public AccommodationDTO updateAccommodation(
+      Long accommodationId, AccommodationDTO accommodationDTO) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    AccommodationEntity accommodationEntity =
+        accommodationDao
+            .findById(accommodationId)
+            .orElseThrow(() -> new AccommodationNotFoundException("Accommodation not found"));
+    AccommodationEntity requestedAccommodation =
+        entityDTOConvert.convertAccommodationDTOToAccommodationEntity(accommodationDTO);
+    if (accommodationDTO.getHotelId() != null) {
+      HotelEntity hotel =
+          hotelDao
+              .findById(accommodationDTO.getHotelId())
+              .orElseThrow(() -> new HotelNotFoundException("Hotel not found"));
+      requestedAccommodation.setHotel(hotel);
+    }
+
+    validateAccommodationForSave(requestedAccommodation, accommodationEntity);
+    validationUtil.validate(requestedAccommodation);
+    accommodationEntity.setHotel(requestedAccommodation.getHotel());
+    accommodationEntity.setType(requestedAccommodation.getType());
+    accommodationEntity.setPrice(requestedAccommodation.getPrice());
+    validationUtil.validate(accommodationEntity);
+    accommodationDao.save(accommodationEntity);
+    auditRecorder.recordAction("UPDATE", "Accommodation", accommodationEntity.getId());
+    accommodationDao.flush();
+    return entityDTOConvert.convertAccommodationEntityToAccommodationDTO(accommodationEntity);
   }
 
-  private void prepare(AccommodationEntity e, AccommodationEntity old) {
-    s.require(
-        e.getHotel() != null && e.getType() != null, "Hotel and accommodation type are required");
-    e.setPrice(s.nonnegative(e.getPrice()));
-    if (old != null) {
-      s.same(old.getHotel().getId(), e.getHotel().getId(), "Hotel");
-      s.require(
-          old.getType() == e.getType(),
+  private void validateAccommodationForSave(
+      AccommodationEntity accommodationEntity, AccommodationEntity existingAccommodation) {
+    validationUtil.require(
+        accommodationEntity.getHotel() != null && accommodationEntity.getType() != null,
+        "Hotel and accommodation type are required");
+    accommodationEntity.setPrice(MoneyUtil.nonnegative(accommodationEntity.getPrice()));
+    if (existingAccommodation != null) {
+      validationUtil.same(
+          existingAccommodation.getHotel().getId(),
+          accommodationEntity.getHotel().getId(),
+          "Hotel");
+      validationUtil.require(
+          existingAccommodation.getType() == accommodationEntity.getType(),
           "Accommodation type is immutable; add a new option instead");
     }
-  }
-
-  private AccommodationDTO finish(AccommodationEntity e, String action) {
-    s.validate(e);
-    s.audit(action, "Accommodation", e.getId());
-    dao.flush();
-    return mapper.toDTO(e);
   }
 }

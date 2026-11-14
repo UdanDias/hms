@@ -10,9 +10,9 @@ public interface ReviewService {
 
   ReviewDTO addReview(ReviewDTO dto);
 
-  ReviewDTO updateReview(Long id, ReviewDTO dto);
+  ReviewDTO updateReview(Long reviewId, ReviewDTO dto);
 
-  void deleteReview(Long id);
+  void deleteReview(Long reviewId);
 
   ReviewDTO moderateReview(Long reviewId, String moderationStatus);
 

@@ -1,86 +1,132 @@
 package com.hms.service.impl;
 
-import com.hms.dao.HmsDao;
-import com.hms.dto.*;
-import com.hms.entities.*;
-import com.hms.service.*;
-import com.hms.service.impl.support.*;
+import com.hms.dao.HotelDAO;
+import com.hms.dao.HotelServiceDAO;
+import com.hms.dto.HotelServiceDTO;
+import com.hms.entities.HotelEntity;
+import com.hms.entities.HotelServiceEntity;
+import com.hms.exception.HotelNotFoundException;
+import com.hms.exception.HotelServiceNotFoundException;
+import com.hms.security.ServiceSecurity;
+import com.hms.service.HotelServiceManagementService;
+import com.hms.util.AuditRecorder;
 import com.hms.util.EntityDTOConvert;
-import java.time.*;
-import java.util.*;
+import com.hms.util.MoneyUtil;
+import com.hms.util.ValidationUtil;
+import java.math.BigDecimal;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(isolation = Isolation.READ_COMMITTED)
 public class HotelServiceManagementServiceImpl implements HotelServiceManagementService {
-  private final HmsDao dao;
-  private final EntityDTOConvert mapper;
-  private final ServiceSupport s;
-  private final BillingRules billing;
+  private final HotelDAO hotelDao;
+  private final HotelServiceDAO hotelServiceDao;
+  private final EntityDTOConvert entityDTOConvert;
+  private final ServiceSecurity serviceSecurity;
+  private final ValidationUtil validationUtil;
+  private final AuditRecorder auditRecorder;
 
   @Override
+  @Transactional(readOnly = true)
   public HotelServiceDTO getSelectedHotelService(Long hotelServiceId) {
-    s.actor();
-    var e = dao.require(HotelServiceEntity.class, hotelServiceId);
-    s.checkRead(e);
-    return mapper.toDTO(e);
+    serviceSecurity.getCurrentUser();
+    HotelServiceEntity hotelServiceEntity =
+        hotelServiceDao
+            .findById(hotelServiceId)
+            .orElseThrow(() -> new HotelServiceNotFoundException("HotelService not found"));
+    serviceSecurity.checkRead(hotelServiceEntity);
+    return entityDTOConvert.convertHotelServiceEntityToHotelServiceDTO(hotelServiceEntity);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<HotelServiceDTO> getAllHotelServices() {
-    s.actor();
-    return dao.all(HotelServiceEntity.class).stream()
-        .filter(s::visible)
-        .map(mapper::toDTO)
-        .toList();
+    serviceSecurity.getCurrentUser();
+    List<HotelServiceEntity> entities =
+        hotelServiceDao.findAll().stream().filter(serviceSecurity::canRead).toList();
+    return entityDTOConvert.convertHotelServiceEntityListToHotelServiceDTOList(entities);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public HotelServiceDTO addHotelService(HotelServiceDTO dto) {
-    s.allow("ADMIN", "MANAGER");
-    dao.lockHotels();
-    var e = mapper.toEntity(dto);
-    prepare(e, null);
-    s.validate(e);
-    dao.persist(e);
-    dao.flush();
-    return finish(e, "CREATE");
+  public HotelServiceDTO addHotelService(HotelServiceDTO hotelServiceDTO) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    HotelServiceEntity hotelServiceEntity =
+        entityDTOConvert.convertHotelServiceDTOToHotelServiceEntity(hotelServiceDTO);
+    if (hotelServiceDTO.getHotelId() != null) {
+      HotelEntity hotel =
+          hotelDao
+              .findById(hotelServiceDTO.getHotelId())
+              .orElseThrow(() -> new HotelNotFoundException("Hotel not found"));
+      hotelServiceEntity.setHotel(hotel);
+    }
+
+    validateHotelServiceForSave(hotelServiceEntity, null);
+    validationUtil.validate(hotelServiceEntity);
+    hotelServiceDao.save(hotelServiceEntity);
+    auditRecorder.recordAction("CREATE", "HotelService", hotelServiceEntity.getId());
+    hotelServiceDao.flush();
+    return entityDTOConvert.convertHotelServiceEntityToHotelServiceDTO(hotelServiceEntity);
   }
 
   @Override
-  @Transactional(isolation = Isolation.READ_COMMITTED)
-  public HotelServiceDTO updateHotelService(Long id, HotelServiceDTO dto) {
-    s.allow("ADMIN", "MANAGER");
-    dao.lockHotels();
-    var old = dao.require(HotelServiceEntity.class, id);
-    var e = mapper.toEntity(dto);
-    prepare(e, old);
-    s.validate(e);
-    BeanUtils.copyProperties(e, old, "id", "createdAt", "updatedAt");
-    return finish(old, "UPDATE");
+  public HotelServiceDTO updateHotelService(Long hotelServiceId, HotelServiceDTO hotelServiceDTO) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    HotelServiceEntity hotelServiceEntity =
+        hotelServiceDao
+            .findById(hotelServiceId)
+            .orElseThrow(() -> new HotelServiceNotFoundException("HotelService not found"));
+    HotelServiceEntity requestedHotelService =
+        entityDTOConvert.convertHotelServiceDTOToHotelServiceEntity(hotelServiceDTO);
+    if (hotelServiceDTO.getHotelId() != null) {
+      HotelEntity hotel =
+          hotelDao
+              .findById(hotelServiceDTO.getHotelId())
+              .orElseThrow(() -> new HotelNotFoundException("Hotel not found"));
+      requestedHotelService.setHotel(hotel);
+    }
+
+    validateHotelServiceForSave(requestedHotelService, hotelServiceEntity);
+    validationUtil.validate(requestedHotelService);
+    hotelServiceEntity.setHotel(requestedHotelService.getHotel());
+    hotelServiceEntity.setName(requestedHotelService.getName());
+    hotelServiceEntity.setDescription(requestedHotelService.getDescription());
+    hotelServiceEntity.setUnit(requestedHotelService.getUnit());
+    hotelServiceEntity.setDefaultPrice(requestedHotelService.getDefaultPrice());
+    hotelServiceEntity.setDefaultTaxRate(requestedHotelService.getDefaultTaxRate());
+    hotelServiceEntity.setIsActive(requestedHotelService.getIsActive());
+    validationUtil.validate(hotelServiceEntity);
+    hotelServiceDao.save(hotelServiceEntity);
+    auditRecorder.recordAction("UPDATE", "HotelService", hotelServiceEntity.getId());
+    hotelServiceDao.flush();
+    return entityDTOConvert.convertHotelServiceEntityToHotelServiceDTO(hotelServiceEntity);
   }
 
-  private void prepare(HotelServiceEntity e, HotelServiceEntity old) {
-    if (e.getDescription() == null) e.setDescription("");
-    s.require(e.getHotel() != null, "Hotel is required");
-    s.text(e.getName(), "Service name");
-    s.text(e.getUnit(), "Service unit");
-    e.setDefaultPrice(s.nonnegative(e.getDefaultPrice()));
-    e.setDefaultTaxRate(billing.taxRate(e.getDefaultTaxRate()));
-    if (e.getIsActive() == null) e.setIsActive(true);
-    if (old != null) s.same(old.getHotel().getId(), e.getHotel().getId(), "Hotel");
+  private void validateHotelServiceForSave(
+      HotelServiceEntity hotelServiceEntity, HotelServiceEntity existingHotelService) {
+    if (hotelServiceEntity.getDescription() == null) hotelServiceEntity.setDescription("");
+    validationUtil.require(hotelServiceEntity.getHotel() != null, "Hotel is required");
+    validationUtil.text(hotelServiceEntity.getName(), "Service name");
+    validationUtil.text(hotelServiceEntity.getUnit(), "Service unit");
+    hotelServiceEntity.setDefaultPrice(MoneyUtil.nonnegative(hotelServiceEntity.getDefaultPrice()));
+    hotelServiceEntity.setDefaultTaxRate(validateTaxRate(hotelServiceEntity.getDefaultTaxRate()));
+    if (hotelServiceEntity.getIsActive() == null) hotelServiceEntity.setIsActive(true);
+    if (existingHotelService != null)
+      validationUtil.same(
+          existingHotelService.getHotel().getId(), hotelServiceEntity.getHotel().getId(), "Hotel");
   }
 
-  private HotelServiceDTO finish(HotelServiceEntity e, String action) {
-    s.validate(e);
-    s.audit(action, "HotelService", e.getId());
-    dao.flush();
-    return mapper.toDTO(e);
+  private BigDecimal validateTaxRate(BigDecimal value) {
+    var x = value == null ? BigDecimal.ZERO : value;
+    validationUtil.require(
+        x.signum() >= 0 && x.compareTo(BigDecimal.valueOf(100)) <= 0,
+        "Tax percentage must be between 0 and 100");
+    return x;
   }
 }

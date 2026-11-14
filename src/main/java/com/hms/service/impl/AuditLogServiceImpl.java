@@ -1,36 +1,44 @@
 package com.hms.service.impl;
 
-import com.hms.dao.HmsDao;
-import com.hms.dto.*;
-import com.hms.entities.*;
-import com.hms.service.*;
-import com.hms.service.impl.support.*;
+import com.hms.dao.AuditLogDAO;
+import com.hms.dto.AuditLogDTO;
+import com.hms.entities.AuditLogEntity;
+import com.hms.exception.AuditLogNotFoundException;
+import com.hms.security.ServiceSecurity;
+import com.hms.service.AuditLogService;
 import com.hms.util.EntityDTOConvert;
-import java.time.*;
-import java.util.*;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional(isolation = Isolation.READ_COMMITTED)
 public class AuditLogServiceImpl implements AuditLogService {
-  private final HmsDao dao;
-  private final EntityDTOConvert mapper;
-  private final ServiceSupport s;
+  private final AuditLogDAO auditLogDao;
+  private final EntityDTOConvert entityDTOConvert;
+  private final ServiceSecurity serviceSecurity;
 
   @Override
+  @Transactional(readOnly = true)
   public AuditLogDTO getSelectedAuditLog(Long auditLogId) {
-    s.actor();
-    var e = dao.require(AuditLogEntity.class, auditLogId);
-    s.checkRead(e);
-    return mapper.toDTO(e);
+    serviceSecurity.getCurrentUser();
+    AuditLogEntity auditLogEntity =
+        auditLogDao
+            .findById(auditLogId)
+            .orElseThrow(() -> new AuditLogNotFoundException("AuditLog not found"));
+    serviceSecurity.checkRead(auditLogEntity);
+    return entityDTOConvert.convertAuditLogEntityToAuditLogDTO(auditLogEntity);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<AuditLogDTO> getAllAuditLogs() {
-    s.actor();
-    return dao.all(AuditLogEntity.class).stream().filter(s::visible).map(mapper::toDTO).toList();
+    serviceSecurity.getCurrentUser();
+    List<AuditLogEntity> entities =
+        auditLogDao.findAll().stream().filter(serviceSecurity::canRead).toList();
+    return entityDTOConvert.convertAuditLogEntityListToAuditLogDTOList(entities);
   }
 }

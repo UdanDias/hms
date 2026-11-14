@@ -10,7 +10,7 @@ public interface RoomRateService {
 
   RoomRateDTO addRoomRate(RoomRateDTO dto);
 
-  RoomRateDTO updateRoomRate(Long id, RoomRateDTO dto);
+  RoomRateDTO updateRoomRate(Long roomRateId, RoomRateDTO dto);
 
-  void deleteRoomRate(Long id);
+  void deleteRoomRate(Long roomRateId);
 }

@@ -1,108 +1,100 @@
 package com.hms.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Data;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.*;
 
 /** Maps the payments table. Relationships are unidirectional; use DTOs at API boundaries. */
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
 @Entity
 @Table(name = "payments")
-public class Payment extends AuditableEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
-    private Long id;
+public class PaymentEntity {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id", nullable = false)
+  private Long id;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "hotel_id", referencedColumnName = "id", nullable = false)
-    private HotelEntity hotel;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "hotel_id", referencedColumnName = "id", nullable = false)
+  @ToString.Exclude
+  @EqualsAndHashCode.Exclude
+  private HotelEntity hotel;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "reservation_id", referencedColumnName = "id", nullable = false)
-    private Reservation reservation;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "reservation_id", referencedColumnName = "id", nullable = false)
+  @ToString.Exclude
+  @EqualsAndHashCode.Exclude
+  private ReservationEntity reservation;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "invoice_id", referencedColumnName = "id", nullable = true)
-    private Invoice invoice;
+  @ManyToOne(fetch = FetchType.LAZY, optional = true)
+  @JoinColumn(name = "invoice_id", referencedColumnName = "id", nullable = true)
+  @ToString.Exclude
+  @EqualsAndHashCode.Exclude
+  private InvoiceEntity invoice;
 
-    @NotNull
-    @Column(name = "receipt_number", nullable = false, unique = true, length = 255)
-    private String receiptNumber;
+  @NotNull
+  @Column(name = "receipt_number", nullable = false, unique = true, length = 255)
+  private String receiptNumber;
 
-    @NotNull
-    @PositiveOrZero
-    @Column(name = "amount", nullable = false, precision = 12, scale = 2)
-    private BigDecimal amount;
+  @NotNull
+  @PositiveOrZero
+  @Column(name = "amount", nullable = false, precision = 12, scale = 2)
+  private BigDecimal amount;
 
-    @NotNull
-    @Column(name = "currency_code", nullable = false, length = 3)
-    private String currencyCode;
+  @NotNull
+  @Column(name = "currency_code", nullable = false, length = 3)
+  private String currencyCode;
 
-    @NotNull
-    @Column(name = "payment_method", nullable = false, length = 255)
-    private String paymentMethod;
+  @NotNull
+  @Column(name = "payment_method", nullable = false, length = 255)
+  private String paymentMethod;
 
-    @Column(name = "reference_number", nullable = true, length = 255)
-    private String referenceNumber;
+  @Column(name = "reference_number", nullable = true, length = 255)
+  private String referenceNumber;
 
-    @NotNull
-    @Column(name = "paid_at", nullable = false)
-    private LocalDateTime paidAt;
+  @NotNull
+  @Column(name = "paid_at", nullable = false)
+  private LocalDateTime paidAt;
 
-    @NotNull
-    @Column(name = "status", nullable = false, length = 255)
-    private String status;
+  @NotNull
+  @Column(name = "status", nullable = false, length = 255)
+  private String status;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "received_by", referencedColumnName = "userId", nullable = false)
-    private User receivedBy;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "received_by", referencedColumnName = "userId", nullable = false)
+  @ToString.Exclude
+  @EqualsAndHashCode.Exclude
+  private UserEntity receivedBy;
 
-    @Column(name = "notes", nullable = true, columnDefinition = "TEXT")
-    private String notes;
+  @Column(name = "notes", nullable = true, columnDefinition = "TEXT")
+  private String notes;
 
-    public Payment() {}
+  @Column(name = "created_at", nullable = false, updatable = false)
+  private LocalDateTime createdAt;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+  @Column(name = "updated_at", nullable = false)
+  private LocalDateTime updatedAt;
 
-    public HotelEntity getHotel() { return hotel; }
-    public void setHotel(HotelEntity hotel) { this.hotel = hotel; }
+  @PrePersist
+  private void onCreate() {
+    LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+    createdAt = now;
+    updatedAt = now;
+  }
 
-    public Reservation getReservation() { return reservation; }
-    public void setReservation(Reservation reservation) { this.reservation = reservation; }
-
-    public Invoice getInvoice() { return invoice; }
-    public void setInvoice(Invoice invoice) { this.invoice = invoice; }
-
-    public String getReceiptNumber() { return receiptNumber; }
-    public void setReceiptNumber(String receiptNumber) { this.receiptNumber = receiptNumber; }
-
-    public BigDecimal getAmount() { return amount; }
-    public void setAmount(BigDecimal amount) { this.amount = amount; }
-
-    public String getCurrencyCode() { return currencyCode; }
-    public void setCurrencyCode(String currencyCode) { this.currencyCode = currencyCode; }
-
-    public String getPaymentMethod() { return paymentMethod; }
-    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
-
-    public String getReferenceNumber() { return referenceNumber; }
-    public void setReferenceNumber(String referenceNumber) { this.referenceNumber = referenceNumber; }
-
-    public LocalDateTime getPaidAt() { return paidAt; }
-    public void setPaidAt(LocalDateTime paidAt) { this.paidAt = paidAt; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    public User getReceivedBy() { return receivedBy; }
-    public void setReceivedBy(User receivedBy) { this.receivedBy = receivedBy; }
-
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
-
+  @PreUpdate
+  private void onUpdate() {
+    updatedAt = LocalDateTime.now(ZoneOffset.UTC);
+  }
 }

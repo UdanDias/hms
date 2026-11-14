@@ -1,28 +1,27 @@
 package com.hms.entities;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import com.hms.entities.enums.*;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Data;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import jakarta.validation.constraints.*;
 
 /** Maps the room_status table. Relationships are unidirectional; use DTOs at API boundaries. */
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
 @Entity
 @Table(name = "room_status")
-public class RoomStatus {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "status_id", nullable = false)
-    private Long statusId;
+public class RoomStatusEntity {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "status_id", nullable = false)
+  private Long statusId;
 
-    @NotNull
-    @Column(name = "status", nullable = false, unique = true)
-    private RoomStatusValue status;
-
-    public RoomStatus() {}
-
-    public Long getStatusId() { return statusId; }
-    public void setStatusId(Long statusId) { this.statusId = statusId; }
-
-    public RoomStatusValue getStatus() { return status; }
-    public void setStatus(RoomStatusValue status) { this.status = status; }
-
+  @NotNull
+  @Column(name = "status", nullable = false, unique = true)
+  private RoomStatusValue status;
 }

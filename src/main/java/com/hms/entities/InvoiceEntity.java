@@ -1,141 +1,121 @@
 package com.hms.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Data;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.*;
 
 /** Maps the invoices table. Relationships are unidirectional; use DTOs at API boundaries. */
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
 @Entity
 @Table(name = "invoices")
-public class Invoice extends AuditableEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
-    private Long id;
+public class InvoiceEntity {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id", nullable = false)
+  private Long id;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "hotel_id", referencedColumnName = "id", nullable = false)
-    private HotelEntity hotel;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "hotel_id", referencedColumnName = "id", nullable = false)
+  @ToString.Exclude
+  @EqualsAndHashCode.Exclude
+  private HotelEntity hotel;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "reservation_id", referencedColumnName = "id", nullable = false)
-    private Reservation reservation;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "reservation_id", referencedColumnName = "id", nullable = false)
+  @ToString.Exclude
+  @EqualsAndHashCode.Exclude
+  private ReservationEntity reservation;
 
-    @NotNull
-    @Column(name = "invoice_number", nullable = false, unique = true, length = 255)
-    private String invoiceNumber;
+  @NotNull
+  @Column(name = "invoice_number", nullable = false, unique = true, length = 255)
+  private String invoiceNumber;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "billed_customer_id", referencedColumnName = "id", nullable = false)
-    private CustomerEntity billedCustomer;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "billed_customer_id", referencedColumnName = "id", nullable = false)
+  @ToString.Exclude
+  @EqualsAndHashCode.Exclude
+  private CustomerEntity billedCustomer;
 
-    @NotNull
-    @Column(name = "billing_name_snapshot", nullable = false, length = 255)
-    private String billingNameSnapshot;
+  @NotNull
+  @Column(name = "billing_name_snapshot", nullable = false, length = 255)
+  private String billingNameSnapshot;
 
-    @NotNull
-    @Column(name = "billing_address_snapshot", nullable = false, columnDefinition = "TEXT")
-    private String billingAddressSnapshot;
+  @NotNull
+  @Column(name = "billing_address_snapshot", nullable = false, columnDefinition = "TEXT")
+  private String billingAddressSnapshot;
 
-    @NotNull
-    @Column(name = "currency_code", nullable = false, length = 3)
-    private String currencyCode;
+  @NotNull
+  @Column(name = "currency_code", nullable = false, length = 3)
+  private String currencyCode;
 
-    @Column(name = "issued_at", nullable = true)
-    private LocalDateTime issuedAt;
+  @Column(name = "issued_at", nullable = true)
+  private LocalDateTime issuedAt;
 
-    @Column(name = "due_date", nullable = true)
-    private LocalDate dueDate;
+  @Column(name = "due_date", nullable = true)
+  private LocalDate dueDate;
 
-    @NotNull
-    @PositiveOrZero
-    @Column(name = "subtotal", nullable = false, precision = 12, scale = 2)
-    private BigDecimal subtotal;
+  @NotNull
+  @PositiveOrZero
+  @Column(name = "subtotal", nullable = false, precision = 12, scale = 2)
+  private BigDecimal subtotal;
 
-    @NotNull
-    @PositiveOrZero
-    @Column(name = "discount_total", nullable = false, precision = 12, scale = 2)
-    private BigDecimal discountTotal;
+  @NotNull
+  @PositiveOrZero
+  @Column(name = "discount_total", nullable = false, precision = 12, scale = 2)
+  private BigDecimal discountTotal;
 
-    @NotNull
-    @PositiveOrZero
-    @Column(name = "tax_total", nullable = false, precision = 12, scale = 2)
-    private BigDecimal taxTotal;
+  @NotNull
+  @PositiveOrZero
+  @Column(name = "tax_total", nullable = false, precision = 12, scale = 2)
+  private BigDecimal taxTotal;
 
-    @NotNull
-    @PositiveOrZero
-    @Column(name = "service_charge_total", nullable = false, precision = 12, scale = 2)
-    private BigDecimal serviceChargeTotal;
+  @NotNull
+  @PositiveOrZero
+  @Column(name = "service_charge_total", nullable = false, precision = 12, scale = 2)
+  private BigDecimal serviceChargeTotal;
 
-    @NotNull
-    @PositiveOrZero
-    @Column(name = "grand_total", nullable = false, precision = 12, scale = 2)
-    private BigDecimal grandTotal;
+  @NotNull
+  @PositiveOrZero
+  @Column(name = "grand_total", nullable = false, precision = 12, scale = 2)
+  private BigDecimal grandTotal;
 
-    @NotNull
-    @Column(name = "status", nullable = false, length = 255)
-    private String status;
+  @NotNull
+  @Column(name = "status", nullable = false, length = 255)
+  private String status;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "created_by", referencedColumnName = "userId", nullable = false)
-    private User createdBy;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "created_by", referencedColumnName = "userId", nullable = false)
+  @ToString.Exclude
+  @EqualsAndHashCode.Exclude
+  private UserEntity createdBy;
 
-    public Invoice() {}
+  @Column(name = "created_at", nullable = false, updatable = false)
+  private LocalDateTime createdAt;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+  @Column(name = "updated_at", nullable = false)
+  private LocalDateTime updatedAt;
 
-    public HotelEntity getHotel() { return hotel; }
-    public void setHotel(HotelEntity hotel) { this.hotel = hotel; }
+  @PrePersist
+  private void onCreate() {
+    LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+    createdAt = now;
+    updatedAt = now;
+  }
 
-    public Reservation getReservation() { return reservation; }
-    public void setReservation(Reservation reservation) { this.reservation = reservation; }
-
-    public String getInvoiceNumber() { return invoiceNumber; }
-    public void setInvoiceNumber(String invoiceNumber) { this.invoiceNumber = invoiceNumber; }
-
-    public CustomerEntity getBilledCustomer() { return billedCustomer; }
-    public void setBilledCustomer(CustomerEntity billedCustomer) { this.billedCustomer = billedCustomer; }
-
-    public String getBillingNameSnapshot() { return billingNameSnapshot; }
-    public void setBillingNameSnapshot(String billingNameSnapshot) { this.billingNameSnapshot = billingNameSnapshot; }
-
-    public String getBillingAddressSnapshot() { return billingAddressSnapshot; }
-    public void setBillingAddressSnapshot(String billingAddressSnapshot) { this.billingAddressSnapshot = billingAddressSnapshot; }
-
-    public String getCurrencyCode() { return currencyCode; }
-    public void setCurrencyCode(String currencyCode) { this.currencyCode = currencyCode; }
-
-    public LocalDateTime getIssuedAt() { return issuedAt; }
-    public void setIssuedAt(LocalDateTime issuedAt) { this.issuedAt = issuedAt; }
-
-    public LocalDate getDueDate() { return dueDate; }
-    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
-
-    public BigDecimal getSubtotal() { return subtotal; }
-    public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
-
-    public BigDecimal getDiscountTotal() { return discountTotal; }
-    public void setDiscountTotal(BigDecimal discountTotal) { this.discountTotal = discountTotal; }
-
-    public BigDecimal getTaxTotal() { return taxTotal; }
-    public void setTaxTotal(BigDecimal taxTotal) { this.taxTotal = taxTotal; }
-
-    public BigDecimal getServiceChargeTotal() { return serviceChargeTotal; }
-    public void setServiceChargeTotal(BigDecimal serviceChargeTotal) { this.serviceChargeTotal = serviceChargeTotal; }
-
-    public BigDecimal getGrandTotal() { return grandTotal; }
-    public void setGrandTotal(BigDecimal grandTotal) { this.grandTotal = grandTotal; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    public User getCreatedBy() { return createdBy; }
-    public void setCreatedBy(User createdBy) { this.createdBy = createdBy; }
-
+  @PreUpdate
+  private void onUpdate() {
+    updatedAt = LocalDateTime.now(ZoneOffset.UTC);
+  }
 }

@@ -1,69 +1,59 @@
 package com.hms.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.Data;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 import jakarta.validation.constraints.*;
 import java.time.*;
 
-/** Maps the booking_status_history table. Relationships are unidirectional; use DTOs at API boundaries. */
+/**
+ * Maps the booking_status_history table. Relationships are unidirectional; use DTOs at API
+ * boundaries.
+ */
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
 @Entity
 @Table(name = "booking_status_history")
 public class BookingStatusHistoryEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id", nullable = false)
+  private Long id;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "reservation_id", referencedColumnName = "id", nullable = false)
-    private Reservation reservation;
+  @NotNull
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "reservation_id", referencedColumnName = "id", nullable = false)
+  @ToString.Exclude
+  @EqualsAndHashCode.Exclude
+  private ReservationEntity reservation;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "reservation_room_id", referencedColumnName = "id", nullable = true)
-    private ReservationRoom reservationRoom;
+  @ManyToOne(fetch = FetchType.LAZY, optional = true)
+  @JoinColumn(name = "reservation_room_id", referencedColumnName = "id", nullable = true)
+  @ToString.Exclude
+  @EqualsAndHashCode.Exclude
+  private ReservationRoomEntity reservationRoom;
 
-    @Column(name = "old_status", nullable = true, length = 255)
-    private String oldStatus;
+  @Column(name = "old_status", nullable = true, length = 255)
+  private String oldStatus;
 
-    @NotNull
-    @Column(name = "new_status", nullable = false, length = 255)
-    private String newStatus;
+  @NotNull
+  @Column(name = "new_status", nullable = false, length = 255)
+  private String newStatus;
 
-    @Column(name = "reason", nullable = true, columnDefinition = "TEXT")
-    private String reason;
+  @Column(name = "reason", nullable = true, columnDefinition = "TEXT")
+  private String reason;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "changed_by", referencedColumnName = "userId", nullable = true)
-    private User changedBy;
+  @ManyToOne(fetch = FetchType.LAZY, optional = true)
+  @JoinColumn(name = "changed_by", referencedColumnName = "userId", nullable = true)
+  @ToString.Exclude
+  @EqualsAndHashCode.Exclude
+  private UserEntity changedBy;
 
-    @NotNull
-    @Column(name = "changed_at", nullable = false)
-    private LocalDateTime changedAt;
-
-    public BookingStatusHistoryEntity() {}
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public Reservation getReservation() { return reservation; }
-    public void setReservation(Reservation reservation) { this.reservation = reservation; }
-
-    public ReservationRoom getReservationRoom() { return reservationRoom; }
-    public void setReservationRoom(ReservationRoom reservationRoom) { this.reservationRoom = reservationRoom; }
-
-    public String getOldStatus() { return oldStatus; }
-    public void setOldStatus(String oldStatus) { this.oldStatus = oldStatus; }
-
-    public String getNewStatus() { return newStatus; }
-    public void setNewStatus(String newStatus) { this.newStatus = newStatus; }
-
-    public String getReason() { return reason; }
-    public void setReason(String reason) { this.reason = reason; }
-
-    public User getChangedBy() { return changedBy; }
-    public void setChangedBy(User changedBy) { this.changedBy = changedBy; }
-
-    public LocalDateTime getChangedAt() { return changedAt; }
-    public void setChangedAt(LocalDateTime changedAt) { this.changedAt = changedAt; }
-
+  @NotNull
+  @Column(name = "changed_at", nullable = false)
+  private LocalDateTime changedAt;
 }

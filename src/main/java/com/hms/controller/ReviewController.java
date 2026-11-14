@@ -1,26 +1,21 @@
 package com.hms.controller;
 
 import com.hms.dto.ReviewDTO;
-import com.hms.exception.ResourceNotFoundException;
+import com.hms.dto.request.*;
 import com.hms.service.ReviewService;
+import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/review")
 @RequiredArgsConstructor
-@Slf4j
 public class ReviewController {
 
-    private final ReviewService reviewService;
+    private final ReviewService service;
 
     @GetMapping
     public String healthCheck() {
@@ -28,33 +23,38 @@ public class ReviewController {
     }
 
     @GetMapping("/getselectedreview")
-    public ResponseEntity<ReviewDTO> getSelectedReview(
-            @RequestParam(name = "reviewId") Long reviewId) {
-        if (reviewId == null || reviewId <= 0) {
-            return ResponseEntity.badRequest().build();
-        }
-        try {
-            ReviewDTO result = reviewService.getSelectedReview(reviewId);
-            if (result == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(result);
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            log.error("Failed to retrieve Review with ID {}", reviewId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<ReviewDTO> getSelectedReview(@RequestParam("reviewId") Long reviewId) {
+        return ResponseEntity.ok(service.getSelectedReview(reviewId));
     }
 
     @GetMapping("/getallreviews")
     public ResponseEntity<List<ReviewDTO>> getAllReviews() {
-        try {
-            List<ReviewDTO> results = reviewService.getAllReviews();
-            return ResponseEntity.ok(results);
-        } catch (Exception e) {
-            log.error("Failed to retrieve Reviews", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return ResponseEntity.ok(service.getAllReviews());
+    }
+
+    @PostMapping("/addreview")
+    public ResponseEntity<ReviewDTO> addReview(@Valid @RequestBody ReviewDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.addReview(dto));
+    }
+
+    @PutMapping("/updatereview")
+    public ResponseEntity<ReviewDTO> updateReview(@RequestParam("reviewId") Long reviewId, @Valid @RequestBody ReviewDTO dto) {
+        return ResponseEntity.ok(service.updateReview(reviewId, dto));
+    }
+
+    @DeleteMapping("/deletereview")
+    public ResponseEntity<Void> deleteReview(@RequestParam("reviewId") Long reviewId) {
+        service.deleteReview(reviewId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/moderatereview")
+    public ResponseEntity<ReviewDTO> moderateReview(@RequestParam("reviewId") Long reviewId, @Valid @RequestBody ReviewModerationRequestDTO request) {
+        return ResponseEntity.ok(service.moderateReview(reviewId, request.getModerationStatus()));
+    }
+
+    @PatchMapping("/replytoreview")
+    public ResponseEntity<ReviewDTO> replyToReview(@RequestParam("reviewId") Long reviewId, @Valid @RequestBody ReviewReplyRequestDTO request) {
+        return ResponseEntity.ok(service.replyToReview(reviewId, request.getReply()));
     }
 }

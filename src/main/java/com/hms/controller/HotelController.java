@@ -1,26 +1,20 @@
 package com.hms.controller;
 
 import com.hms.dto.HotelDTO;
-import com.hms.exception.ResourceNotFoundException;
 import com.hms.service.HotelService;
+import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/hotel")
 @RequiredArgsConstructor
-@Slf4j
 public class HotelController {
 
-    private final HotelService hotelService;
+    private final HotelService service;
 
     @GetMapping
     public String healthCheck() {
@@ -28,33 +22,22 @@ public class HotelController {
     }
 
     @GetMapping("/getselectedhotel")
-    public ResponseEntity<HotelDTO> getSelectedHotel(
-            @RequestParam(name = "hotelId") Long hotelId) {
-        if (hotelId == null || hotelId <= 0) {
-            return ResponseEntity.badRequest().build();
-        }
-        try {
-            HotelDTO result = hotelService.getSelectedHotel(hotelId);
-            if (result == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(result);
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            log.error("Failed to retrieve Hotel with ID {}", hotelId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<HotelDTO> getSelectedHotel(@RequestParam("hotelId") Long hotelId) {
+        return ResponseEntity.ok(service.getSelectedHotel(hotelId));
     }
 
     @GetMapping("/getallhotels")
     public ResponseEntity<List<HotelDTO>> getAllHotels() {
-        try {
-            List<HotelDTO> results = hotelService.getAllHotels();
-            return ResponseEntity.ok(results);
-        } catch (Exception e) {
-            log.error("Failed to retrieve Hotels", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return ResponseEntity.ok(service.getAllHotels());
+    }
+
+    @PostMapping("/addhotel")
+    public ResponseEntity<HotelDTO> addHotel(@Valid @RequestBody HotelDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.addHotel(dto));
+    }
+
+    @PutMapping("/updatehotel")
+    public ResponseEntity<HotelDTO> updateHotel(@RequestParam("hotelId") Long hotelId, @Valid @RequestBody HotelDTO dto) {
+        return ResponseEntity.ok(service.updateHotel(hotelId, dto));
     }
 }

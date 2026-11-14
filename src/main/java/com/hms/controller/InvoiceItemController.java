@@ -1,26 +1,20 @@
 package com.hms.controller;
 
 import com.hms.dto.InvoiceItemDTO;
-import com.hms.exception.ResourceNotFoundException;
 import com.hms.service.InvoiceItemService;
+import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/invoiceitem")
 @RequiredArgsConstructor
-@Slf4j
 public class InvoiceItemController {
 
-    private final InvoiceItemService invoiceItemService;
+    private final InvoiceItemService service;
 
     @GetMapping
     public String healthCheck() {
@@ -28,33 +22,28 @@ public class InvoiceItemController {
     }
 
     @GetMapping("/getselectedinvoiceitem")
-    public ResponseEntity<InvoiceItemDTO> getSelectedInvoiceItem(
-            @RequestParam(name = "invoiceItemId") Long invoiceItemId) {
-        if (invoiceItemId == null || invoiceItemId <= 0) {
-            return ResponseEntity.badRequest().build();
-        }
-        try {
-            InvoiceItemDTO result = invoiceItemService.getSelectedInvoiceItem(invoiceItemId);
-            if (result == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(result);
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            log.error("Failed to retrieve InvoiceItem with ID {}", invoiceItemId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<InvoiceItemDTO> getSelectedInvoiceItem(@RequestParam("invoiceItemId") Long invoiceItemId) {
+        return ResponseEntity.ok(service.getSelectedInvoiceItem(invoiceItemId));
     }
 
     @GetMapping("/getallinvoiceitems")
     public ResponseEntity<List<InvoiceItemDTO>> getAllInvoiceItems() {
-        try {
-            List<InvoiceItemDTO> results = invoiceItemService.getAllInvoiceItems();
-            return ResponseEntity.ok(results);
-        } catch (Exception e) {
-            log.error("Failed to retrieve InvoiceItems", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return ResponseEntity.ok(service.getAllInvoiceItems());
+    }
+
+    @PostMapping("/addinvoiceitem")
+    public ResponseEntity<InvoiceItemDTO> addInvoiceItem(@Valid @RequestBody InvoiceItemDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.addInvoiceItem(dto));
+    }
+
+    @PutMapping("/updateinvoiceitem")
+    public ResponseEntity<InvoiceItemDTO> updateInvoiceItem(@RequestParam("invoiceItemId") Long invoiceItemId, @Valid @RequestBody InvoiceItemDTO dto) {
+        return ResponseEntity.ok(service.updateInvoiceItem(invoiceItemId, dto));
+    }
+
+    @DeleteMapping("/deleteinvoiceitem")
+    public ResponseEntity<Void> deleteInvoiceItem(@RequestParam("invoiceItemId") Long invoiceItemId) {
+        service.deleteInvoiceItem(invoiceItemId);
+        return ResponseEntity.noContent().build();
     }
 }

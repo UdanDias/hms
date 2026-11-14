@@ -1,26 +1,20 @@
 package com.hms.controller;
 
 import com.hms.dto.RoomRateDTO;
-import com.hms.exception.ResourceNotFoundException;
 import com.hms.service.RoomRateService;
+import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/roomrate")
 @RequiredArgsConstructor
-@Slf4j
 public class RoomRateController {
 
-    private final RoomRateService roomRateService;
+    private final RoomRateService service;
 
     @GetMapping
     public String healthCheck() {
@@ -28,33 +22,28 @@ public class RoomRateController {
     }
 
     @GetMapping("/getselectedroomrate")
-    public ResponseEntity<RoomRateDTO> getSelectedRoomRate(
-            @RequestParam(name = "roomRateId") Long roomRateId) {
-        if (roomRateId == null || roomRateId <= 0) {
-            return ResponseEntity.badRequest().build();
-        }
-        try {
-            RoomRateDTO result = roomRateService.getSelectedRoomRate(roomRateId);
-            if (result == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(result);
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            log.error("Failed to retrieve RoomRate with ID {}", roomRateId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<RoomRateDTO> getSelectedRoomRate(@RequestParam("roomRateId") Long roomRateId) {
+        return ResponseEntity.ok(service.getSelectedRoomRate(roomRateId));
     }
 
     @GetMapping("/getallroomrates")
     public ResponseEntity<List<RoomRateDTO>> getAllRoomRates() {
-        try {
-            List<RoomRateDTO> results = roomRateService.getAllRoomRates();
-            return ResponseEntity.ok(results);
-        } catch (Exception e) {
-            log.error("Failed to retrieve RoomRates", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return ResponseEntity.ok(service.getAllRoomRates());
+    }
+
+    @PostMapping("/addroomrate")
+    public ResponseEntity<RoomRateDTO> addRoomRate(@Valid @RequestBody RoomRateDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.addRoomRate(dto));
+    }
+
+    @PutMapping("/updateroomrate")
+    public ResponseEntity<RoomRateDTO> updateRoomRate(@RequestParam("roomRateId") Long roomRateId, @Valid @RequestBody RoomRateDTO dto) {
+        return ResponseEntity.ok(service.updateRoomRate(roomRateId, dto));
+    }
+
+    @DeleteMapping("/deleteroomrate")
+    public ResponseEntity<Void> deleteRoomRate(@RequestParam("roomRateId") Long roomRateId) {
+        service.deleteRoomRate(roomRateId);
+        return ResponseEntity.noContent().build();
     }
 }

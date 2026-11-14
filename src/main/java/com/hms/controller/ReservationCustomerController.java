@@ -1,26 +1,20 @@
 package com.hms.controller;
 
 import com.hms.dto.ReservationCustomerDTO;
-import com.hms.exception.ResourceNotFoundException;
 import com.hms.service.ReservationCustomerService;
+import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/reservationcustomer")
 @RequiredArgsConstructor
-@Slf4j
 public class ReservationCustomerController {
 
-    private final ReservationCustomerService reservationCustomerService;
+    private final ReservationCustomerService service;
 
     @GetMapping
     public String healthCheck() {
@@ -28,33 +22,28 @@ public class ReservationCustomerController {
     }
 
     @GetMapping("/getselectedreservationcustomer")
-    public ResponseEntity<ReservationCustomerDTO> getSelectedReservationCustomer(
-            @RequestParam(name = "reservationCustomerId") Long reservationCustomerId) {
-        if (reservationCustomerId == null || reservationCustomerId <= 0) {
-            return ResponseEntity.badRequest().build();
-        }
-        try {
-            ReservationCustomerDTO result = reservationCustomerService.getSelectedReservationCustomer(reservationCustomerId);
-            if (result == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(result);
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            log.error("Failed to retrieve ReservationCustomer with ID {}", reservationCustomerId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    public ResponseEntity<ReservationCustomerDTO> getSelectedReservationCustomer(@RequestParam("reservationCustomerId") Long reservationCustomerId) {
+        return ResponseEntity.ok(service.getSelectedReservationCustomer(reservationCustomerId));
     }
 
     @GetMapping("/getallreservationcustomers")
     public ResponseEntity<List<ReservationCustomerDTO>> getAllReservationCustomers() {
-        try {
-            List<ReservationCustomerDTO> results = reservationCustomerService.getAllReservationCustomers();
-            return ResponseEntity.ok(results);
-        } catch (Exception e) {
-            log.error("Failed to retrieve ReservationCustomers", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        return ResponseEntity.ok(service.getAllReservationCustomers());
+    }
+
+    @PostMapping("/addreservationcustomer")
+    public ResponseEntity<ReservationCustomerDTO> addReservationCustomer(@Valid @RequestBody ReservationCustomerDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.addReservationCustomer(dto));
+    }
+
+    @PutMapping("/updatereservationcustomer")
+    public ResponseEntity<ReservationCustomerDTO> updateReservationCustomer(@RequestParam("reservationCustomerId") Long reservationCustomerId, @Valid @RequestBody ReservationCustomerDTO dto) {
+        return ResponseEntity.ok(service.updateReservationCustomer(reservationCustomerId, dto));
+    }
+
+    @DeleteMapping("/deletereservationcustomer")
+    public ResponseEntity<Void> deleteReservationCustomer(@RequestParam("reservationCustomerId") Long reservationCustomerId) {
+        service.deleteReservationCustomer(reservationCustomerId);
+        return ResponseEntity.noContent().build();
     }
 }

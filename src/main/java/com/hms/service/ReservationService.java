@@ -3,12 +3,20 @@ package com.hms.service;
 import com.hms.dto.ReservationDTO;
 import java.util.List;
 
-/** Contract only. Implement as a Spring @Service; perform queries, authorization and mapping there. */
 public interface ReservationService {
+  ReservationDTO getSelectedReservation(Long reservationId);
 
-    /** Return the DTO or throw ResourceNotFoundException when it does not exist. */
-    ReservationDTO getSelectedReservation(Long reservationId);
+  List<ReservationDTO> getAllReservations();
 
-    /** Return a non-null list; use an empty list when no records are visible to the caller. */
-    List<ReservationDTO> getAllReservations();
+  ReservationDTO addReservation(ReservationDTO dto);
+
+  ReservationDTO updateReservation(Long id, ReservationDTO dto);
+
+  ReservationDTO confirmReservation(Long reservationId);
+
+  ReservationDTO cancelReservation(Long reservationId, String reason);
+
+  ReservationDTO checkInReservation(Long reservationId);
+
+  ReservationDTO checkOutReservation(Long reservationId);
 }

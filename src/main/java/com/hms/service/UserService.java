@@ -3,12 +3,12 @@ package com.hms.service;
 import com.hms.dto.UserDTO;
 import java.util.List;
 
-/** Contract only. Implement as a Spring @Service; perform queries, authorization and mapping there. */
 public interface UserService {
+  UserDTO getSelectedUser(Long userId);
 
-    /** Return the DTO or throw ResourceNotFoundException when it does not exist. */
-    UserDTO getSelectedUser(Long userId);
+  List<UserDTO> getAllUsers();
 
-    /** Return a non-null list; use an empty list when no records are visible to the caller. */
-    List<UserDTO> getAllUsers();
+  UserDTO addUser(UserDTO dto);
+
+  UserDTO updateUser(Long id, UserDTO dto);
 }

@@ -1,14 +1,21 @@
 package com.hms.service;
 
 import com.hms.dto.InvoiceDTO;
+import java.math.BigDecimal;
 import java.util.List;
 
-/** Contract only. Implement as a Spring @Service; perform queries, authorization and mapping there. */
 public interface InvoiceService {
+  InvoiceDTO getSelectedInvoice(Long invoiceId);
 
-    /** Return the DTO or throw ResourceNotFoundException when it does not exist. */
-    InvoiceDTO getSelectedInvoice(Long invoiceId);
+  List<InvoiceDTO> getAllInvoices();
 
-    /** Return a non-null list; use an empty list when no records are visible to the caller. */
-    List<InvoiceDTO> getAllInvoices();
+  InvoiceDTO addInvoice(InvoiceDTO dto);
+
+  InvoiceDTO updateInvoice(Long id, InvoiceDTO dto);
+
+  InvoiceDTO issueInvoice(Long invoiceId);
+
+  InvoiceDTO voidInvoice(Long invoiceId);
+
+  BigDecimal getOutstandingBalance(Long invoiceId);
 }

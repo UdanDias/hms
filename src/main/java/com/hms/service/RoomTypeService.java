@@ -3,12 +3,12 @@ package com.hms.service;
 import com.hms.dto.RoomTypeDTO;
 import java.util.List;
 
-/** Contract only. Implement as a Spring @Service; perform queries, authorization and mapping there. */
 public interface RoomTypeService {
+  RoomTypeDTO getSelectedRoomType(Long roomTypeId);
 
-    /** Return the DTO or throw ResourceNotFoundException when it does not exist. */
-    RoomTypeDTO getSelectedRoomType(Long roomTypeId);
+  List<RoomTypeDTO> getAllRoomTypes();
 
-    /** Return a non-null list; use an empty list when no records are visible to the caller. */
-    List<RoomTypeDTO> getAllRoomTypes();
+  RoomTypeDTO addRoomType(RoomTypeDTO dto);
+
+  RoomTypeDTO updateRoomType(Long id, RoomTypeDTO dto);
 }

@@ -15,46 +15,52 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ReviewController {
 
-    private final ReviewService service;
+  private final ReviewService service;
 
-    @GetMapping
-    public String healthCheck() {
-        return "Review controller is running";
-    }
+  @GetMapping
+  public String healthCheck() {
+    return "Review controller is running";
+  }
 
-    @GetMapping("/getselectedreview")
-    public ResponseEntity<ReviewDTO> getSelectedReview(@RequestParam("reviewId") Long reviewId) {
-        return ResponseEntity.ok(service.getSelectedReview(reviewId));
-    }
+  @GetMapping("/getselectedreview")
+  public ResponseEntity<ReviewDTO> getSelectedReview(@RequestParam("reviewId") Long reviewId) {
+    return ResponseEntity.ok(service.getSelectedReview(reviewId));
+  }
 
-    @GetMapping("/getallreviews")
-    public ResponseEntity<List<ReviewDTO>> getAllReviews() {
-        return ResponseEntity.ok(service.getAllReviews());
-    }
+  @GetMapping("/getallreviews")
+  public ResponseEntity<List<ReviewDTO>> getAllReviews() {
+    return ResponseEntity.ok(service.getAllReviews());
+  }
 
-    @PostMapping("/addreview")
-    public ResponseEntity<ReviewDTO> addReview(@Valid @RequestBody ReviewDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addReview(dto));
-    }
+  @PostMapping("/addreview")
+  public ResponseEntity<ReviewDTO> addReview(@Valid @RequestBody ReviewDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addReview(dto));
+  }
 
-    @PutMapping("/updatereview")
-    public ResponseEntity<ReviewDTO> updateReview(@RequestParam("reviewId") Long reviewId, @Valid @RequestBody ReviewDTO dto) {
-        return ResponseEntity.ok(service.updateReview(reviewId, dto));
-    }
+  @RequestMapping(
+      value = "/updatereview",
+      method = {RequestMethod.PUT, RequestMethod.PATCH})
+  public ResponseEntity<ReviewDTO> updateReview(
+      @RequestParam("reviewId") Long reviewId, @Valid @RequestBody ReviewDTO dto) {
+    return ResponseEntity.ok(service.updateReview(reviewId, dto));
+  }
 
-    @DeleteMapping("/deletereview")
-    public ResponseEntity<Void> deleteReview(@RequestParam("reviewId") Long reviewId) {
-        service.deleteReview(reviewId);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/deletereview")
+  public ResponseEntity<Void> deleteReview(@RequestParam("reviewId") Long reviewId) {
+    service.deleteReview(reviewId);
+    return ResponseEntity.noContent().build();
+  }
 
-    @PatchMapping("/moderatereview")
-    public ResponseEntity<ReviewDTO> moderateReview(@RequestParam("reviewId") Long reviewId, @Valid @RequestBody ReviewModerationRequestDTO request) {
-        return ResponseEntity.ok(service.moderateReview(reviewId, request.getModerationStatus()));
-    }
+  @PatchMapping("/moderatereview")
+  public ResponseEntity<ReviewDTO> moderateReview(
+      @RequestParam("reviewId") Long reviewId,
+      @Valid @RequestBody ReviewModerationRequestDTO request) {
+    return ResponseEntity.ok(service.moderateReview(reviewId, request.getModerationStatus()));
+  }
 
-    @PatchMapping("/replytoreview")
-    public ResponseEntity<ReviewDTO> replyToReview(@RequestParam("reviewId") Long reviewId, @Valid @RequestBody ReviewReplyRequestDTO request) {
-        return ResponseEntity.ok(service.replyToReview(reviewId, request.getReply()));
-    }
+  @PatchMapping("/replytoreview")
+  public ResponseEntity<ReviewDTO> replyToReview(
+      @RequestParam("reviewId") Long reviewId, @Valid @RequestBody ReviewReplyRequestDTO request) {
+    return ResponseEntity.ok(service.replyToReview(reviewId, request.getReply()));
+  }
 }

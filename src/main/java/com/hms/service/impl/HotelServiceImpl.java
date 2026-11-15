@@ -109,4 +109,19 @@ public class HotelServiceImpl implements HotelService {
           reservationDao.findByHotelId(existingHotel.getId()).isEmpty(),
           "Currency cannot change after bookings exist");
   }
+
+  @Override
+  public void deleteHotel(Long id) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    var entity =
+        hotelDao.findById(id).orElseThrow(() -> new HotelNotFoundException("Hotel not found"));
+    validationUtil.require(
+        reservationDao.findByHotelId(id).stream()
+            .noneMatch(r -> java.util.Set.of("confirmed", "checked_in").contains(r.getStatus())),
+        "Resolve active reservations before deactivating the hotel");
+    entity.setIsActive(false);
+    auditRecorder.recordAction("DEACTIVATE", "Hotel", id);
+    hotelDao.flush();
+  }
 }

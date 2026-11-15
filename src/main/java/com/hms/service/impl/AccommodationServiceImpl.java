@@ -120,4 +120,17 @@ public class AccommodationServiceImpl implements AccommodationService {
           "Accommodation type is immutable; add a new option instead");
     }
   }
+
+  @Override
+  public void deleteAccommodation(Long id) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    var entity =
+        accommodationDao
+            .findById(id)
+            .orElseThrow(() -> new AccommodationNotFoundException("Accommodation not found"));
+    accommodationDao.delete(entity);
+    auditRecorder.recordAction("DELETE", "Accommodation", id);
+    accommodationDao.flush();
+  }
 }

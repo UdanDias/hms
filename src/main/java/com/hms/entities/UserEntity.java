@@ -1,12 +1,12 @@
 package com.hms.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.Data;
-import lombok.ToString;
-import lombok.EqualsAndHashCode;
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /** Maps the user table. Relationships are unidirectional; use DTOs at API boundaries. */
 @AllArgsConstructor

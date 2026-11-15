@@ -13,4 +13,6 @@ public interface ServiceChargeService {
   ServiceChargeDTO updateServiceCharge(Long serviceChargeId, ServiceChargeDTO dto);
 
   ServiceChargeDTO voidServiceCharge(Long serviceChargeId);
+
+  void deleteServiceCharge(Long id);
 }

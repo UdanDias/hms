@@ -262,4 +262,9 @@ public class ServiceChargeServiceImpl implements ServiceChargeService {
         invoiceItemDao.findNonVoidByServiceChargeId(charge.getId()).isEmpty(),
         "Service charge is already billed");
   }
+
+  @Override
+  public void deleteServiceCharge(Long id) {
+    voidServiceCharge(id);
+  }
 }

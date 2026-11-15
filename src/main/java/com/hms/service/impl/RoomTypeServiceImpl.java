@@ -136,4 +136,20 @@ public class RoomTypeServiceImpl implements RoomTypeService {
             "New occupancy limits conflict with active bookings");
     }
   }
+
+  @Override
+  public void deleteRoomType(Long id) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    var entity =
+        roomTypeDao
+            .findById(id)
+            .orElseThrow(() -> new RoomTypeNotFoundException("Room type not found"));
+    validationUtil.require(
+        reservationRoomDao.findActiveByRoomTypeId(id).isEmpty(),
+        "Resolve active stays before deactivating room type");
+    entity.setIsActive(false);
+    auditRecorder.recordAction("DEACTIVATE", "RoomType", id);
+    roomTypeDao.flush();
+  }
 }

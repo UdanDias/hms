@@ -320,4 +320,9 @@ public class InvoiceServiceImpl implements InvoiceService {
         .map(RefundEntity::getAmount)
         .reduce(BigDecimal.ZERO, BigDecimal::add);
   }
+
+  @Override
+  public void deleteInvoice(Long id) {
+    voidInvoice(id);
+  }
 }

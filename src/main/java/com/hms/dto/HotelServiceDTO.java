@@ -13,26 +13,25 @@ import lombok.NoArgsConstructor;
 @Data
 public class HotelServiceDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long hotelId;
+  private Long hotelId;
 
-    private String name;
+  private String name;
 
-    private String description;
+  private String description;
 
-    private String unit;
+  private String unit;
 
-    private BigDecimal defaultPrice;
+  private BigDecimal defaultPrice;
 
-    private BigDecimal defaultTaxRate;
+  private BigDecimal defaultTaxRate;
 
-    private Boolean isActive;
+  private Boolean isActive;
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 }

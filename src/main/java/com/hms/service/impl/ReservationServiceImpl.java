@@ -459,4 +459,9 @@ public class ReservationServiceImpl implements ReservationService {
         .map(this::calculateNetPayment)
         .reduce(BigDecimal.ZERO, BigDecimal::add);
   }
+
+  @Override
+  public void deleteReservation(Long id) {
+    cancelReservation(id, "Cancelled through delete endpoint");
+  }
 }

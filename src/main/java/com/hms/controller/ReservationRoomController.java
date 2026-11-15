@@ -15,40 +15,56 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ReservationRoomController {
 
-    private final ReservationRoomService service;
+  private final ReservationRoomService service;
 
-    @GetMapping
-    public String healthCheck() {
-        return "ReservationRoom controller is running";
-    }
+  @GetMapping
+  public String healthCheck() {
+    return "ReservationRoom controller is running";
+  }
 
-    @GetMapping("/getselectedreservationroom")
-    public ResponseEntity<ReservationRoomDTO> getSelectedReservationRoom(@RequestParam("reservationRoomId") Long reservationRoomId) {
-        return ResponseEntity.ok(service.getSelectedReservationRoom(reservationRoomId));
-    }
+  @GetMapping("/getselectedreservationroom")
+  public ResponseEntity<ReservationRoomDTO> getSelectedReservationRoom(
+      @RequestParam("reservationRoomId") Long reservationRoomId) {
+    return ResponseEntity.ok(service.getSelectedReservationRoom(reservationRoomId));
+  }
 
-    @GetMapping("/getallreservationrooms")
-    public ResponseEntity<List<ReservationRoomDTO>> getAllReservationRooms() {
-        return ResponseEntity.ok(service.getAllReservationRooms());
-    }
+  @GetMapping("/getallreservationrooms")
+  public ResponseEntity<List<ReservationRoomDTO>> getAllReservationRooms() {
+    return ResponseEntity.ok(service.getAllReservationRooms());
+  }
 
-    @PostMapping("/addreservationroom")
-    public ResponseEntity<ReservationRoomDTO> addReservationRoom(@Valid @RequestBody ReservationRoomDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addReservationRoom(dto));
-    }
+  @PostMapping("/addreservationroom")
+  public ResponseEntity<ReservationRoomDTO> addReservationRoom(
+      @Valid @RequestBody ReservationRoomDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addReservationRoom(dto));
+  }
 
-    @PutMapping("/updatereservationroom")
-    public ResponseEntity<ReservationRoomDTO> updateReservationRoom(@RequestParam("reservationRoomId") Long reservationRoomId, @Valid @RequestBody ReservationRoomDTO dto) {
-        return ResponseEntity.ok(service.updateReservationRoom(reservationRoomId, dto));
-    }
+  @RequestMapping(
+      value = "/updatereservationroom",
+      method = {RequestMethod.PUT, RequestMethod.PATCH})
+  public ResponseEntity<ReservationRoomDTO> updateReservationRoom(
+      @RequestParam("reservationRoomId") Long reservationRoomId,
+      @Valid @RequestBody ReservationRoomDTO dto) {
+    return ResponseEntity.ok(service.updateReservationRoom(reservationRoomId, dto));
+  }
 
-    @PatchMapping("/cancelreservationroom")
-    public ResponseEntity<ReservationRoomDTO> cancelReservationRoom(@RequestParam("reservationRoomId") Long reservationRoomId, @Valid @RequestBody ReasonRequestDTO request) {
-        return ResponseEntity.ok(service.cancelReservationRoom(reservationRoomId, request.getReason()));
-    }
+  @PatchMapping("/cancelreservationroom")
+  public ResponseEntity<ReservationRoomDTO> cancelReservationRoom(
+      @RequestParam("reservationRoomId") Long reservationRoomId,
+      @Valid @RequestBody ReasonRequestDTO request) {
+    return ResponseEntity.ok(service.cancelReservationRoom(reservationRoomId, request.getReason()));
+  }
 
-    @PatchMapping("/assignroom")
-    public ResponseEntity<ReservationRoomDTO> assignRoom(@RequestParam("reservationRoomId") Long reservationRoomId, @Valid @RequestBody RoomAssignmentRequestDTO request) {
-        return ResponseEntity.ok(service.assignRoom(reservationRoomId, request.getRoomId()));
-    }
+  @PatchMapping("/assignroom")
+  public ResponseEntity<ReservationRoomDTO> assignRoom(
+      @RequestParam("reservationRoomId") Long reservationRoomId,
+      @Valid @RequestBody RoomAssignmentRequestDTO request) {
+    return ResponseEntity.ok(service.assignRoom(reservationRoomId, request.getRoomId()));
+  }
+
+  @DeleteMapping("/deletereservationroom")
+  public ResponseEntity<Void> deleteReservationRoom(@RequestParam("reservationRoomId") Long id) {
+    service.deleteReservationRoom(id);
+    return ResponseEntity.noContent().build();
+  }
 }

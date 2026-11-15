@@ -12,18 +12,17 @@ import lombok.NoArgsConstructor;
 @Data
 public class ReservationCustomerDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long reservationRoomId;
+  private Long reservationRoomId;
 
-    private Long customerId;
+  private Long customerId;
 
-    private Boolean isPrimaryCustomer;
+  private Boolean isPrimaryCustomer;
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 }

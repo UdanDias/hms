@@ -14,36 +14,33 @@ import lombok.ToString;
 @Data
 public class CustomerDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long userId;
+  private Long userId;
 
-    private String name;
+  private String name;
 
-    private String phone;
+  private String phone;
 
-    private String email;
+  private String email;
 
-    @ToString.Exclude
-    private String nic;
+  @ToString.Exclude private String nic;
 
-    private Integer age;
+  private Integer age;
 
-    private String address;
+  private String address;
 
-    private String countryCode;
+  private String countryCode;
 
-    private LocalDate dateOfBirth;
+  private LocalDate dateOfBirth;
 
-    private String identityDocumentType;
+  private String identityDocumentType;
 
-    @ToString.Exclude
-    private byte[] identityDocumentNumberEncrypted;
+  @ToString.Exclude private byte[] identityDocumentNumberEncrypted;
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 }

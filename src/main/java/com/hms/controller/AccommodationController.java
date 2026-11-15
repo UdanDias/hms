@@ -14,30 +14,42 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AccommodationController {
 
-    private final AccommodationService service;
+  private final AccommodationService service;
 
-    @GetMapping
-    public String healthCheck() {
-        return "Accommodation controller is running";
-    }
+  @GetMapping
+  public String healthCheck() {
+    return "Accommodation controller is running";
+  }
 
-    @GetMapping("/getselectedaccommodation")
-    public ResponseEntity<AccommodationDTO> getSelectedAccommodation(@RequestParam("accommodationId") Long accommodationId) {
-        return ResponseEntity.ok(service.getSelectedAccommodation(accommodationId));
-    }
+  @GetMapping("/getselectedaccommodation")
+  public ResponseEntity<AccommodationDTO> getSelectedAccommodation(
+      @RequestParam("accommodationId") Long accommodationId) {
+    return ResponseEntity.ok(service.getSelectedAccommodation(accommodationId));
+  }
 
-    @GetMapping("/getallaccommodations")
-    public ResponseEntity<List<AccommodationDTO>> getAllAccommodations() {
-        return ResponseEntity.ok(service.getAllAccommodations());
-    }
+  @GetMapping("/getallaccommodations")
+  public ResponseEntity<List<AccommodationDTO>> getAllAccommodations() {
+    return ResponseEntity.ok(service.getAllAccommodations());
+  }
 
-    @PostMapping("/addaccommodation")
-    public ResponseEntity<AccommodationDTO> addAccommodation(@Valid @RequestBody AccommodationDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addAccommodation(dto));
-    }
+  @PostMapping("/addaccommodation")
+  public ResponseEntity<AccommodationDTO> addAccommodation(
+      @Valid @RequestBody AccommodationDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addAccommodation(dto));
+  }
 
-    @PutMapping("/updateaccommodation")
-    public ResponseEntity<AccommodationDTO> updateAccommodation(@RequestParam("accommodationId") Long accommodationId, @Valid @RequestBody AccommodationDTO dto) {
-        return ResponseEntity.ok(service.updateAccommodation(accommodationId, dto));
-    }
+  @RequestMapping(
+      value = "/updateaccommodation",
+      method = {RequestMethod.PUT, RequestMethod.PATCH})
+  public ResponseEntity<AccommodationDTO> updateAccommodation(
+      @RequestParam("accommodationId") Long accommodationId,
+      @Valid @RequestBody AccommodationDTO dto) {
+    return ResponseEntity.ok(service.updateAccommodation(accommodationId, dto));
+  }
+
+  @DeleteMapping("/deleteaccommodation")
+  public ResponseEntity<Void> deleteAccommodation(@RequestParam("accommodationId") Long id) {
+    service.deleteAccommodation(id);
+    return ResponseEntity.noContent().build();
+  }
 }

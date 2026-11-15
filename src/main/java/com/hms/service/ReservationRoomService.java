@@ -15,4 +15,6 @@ public interface ReservationRoomService {
   ReservationRoomDTO cancelReservationRoom(Long reservationRoomId, String reason);
 
   ReservationRoomDTO assignRoom(Long reservationRoomId, Long roomId);
+
+  void deleteReservationRoom(Long id);
 }

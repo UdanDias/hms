@@ -14,35 +14,48 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ServiceChargeController {
 
-    private final ServiceChargeService service;
+  private final ServiceChargeService service;
 
-    @GetMapping
-    public String healthCheck() {
-        return "ServiceCharge controller is running";
-    }
+  @GetMapping
+  public String healthCheck() {
+    return "ServiceCharge controller is running";
+  }
 
-    @GetMapping("/getselectedservicecharge")
-    public ResponseEntity<ServiceChargeDTO> getSelectedServiceCharge(@RequestParam("serviceChargeId") Long serviceChargeId) {
-        return ResponseEntity.ok(service.getSelectedServiceCharge(serviceChargeId));
-    }
+  @GetMapping("/getselectedservicecharge")
+  public ResponseEntity<ServiceChargeDTO> getSelectedServiceCharge(
+      @RequestParam("serviceChargeId") Long serviceChargeId) {
+    return ResponseEntity.ok(service.getSelectedServiceCharge(serviceChargeId));
+  }
 
-    @GetMapping("/getallservicecharges")
-    public ResponseEntity<List<ServiceChargeDTO>> getAllServiceCharges() {
-        return ResponseEntity.ok(service.getAllServiceCharges());
-    }
+  @GetMapping("/getallservicecharges")
+  public ResponseEntity<List<ServiceChargeDTO>> getAllServiceCharges() {
+    return ResponseEntity.ok(service.getAllServiceCharges());
+  }
 
-    @PostMapping("/addservicecharge")
-    public ResponseEntity<ServiceChargeDTO> addServiceCharge(@Valid @RequestBody ServiceChargeDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addServiceCharge(dto));
-    }
+  @PostMapping("/addservicecharge")
+  public ResponseEntity<ServiceChargeDTO> addServiceCharge(
+      @Valid @RequestBody ServiceChargeDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addServiceCharge(dto));
+  }
 
-    @PutMapping("/updateservicecharge")
-    public ResponseEntity<ServiceChargeDTO> updateServiceCharge(@RequestParam("serviceChargeId") Long serviceChargeId, @Valid @RequestBody ServiceChargeDTO dto) {
-        return ResponseEntity.ok(service.updateServiceCharge(serviceChargeId, dto));
-    }
+  @RequestMapping(
+      value = "/updateservicecharge",
+      method = {RequestMethod.PUT, RequestMethod.PATCH})
+  public ResponseEntity<ServiceChargeDTO> updateServiceCharge(
+      @RequestParam("serviceChargeId") Long serviceChargeId,
+      @Valid @RequestBody ServiceChargeDTO dto) {
+    return ResponseEntity.ok(service.updateServiceCharge(serviceChargeId, dto));
+  }
 
-    @PatchMapping("/voidservicecharge")
-    public ResponseEntity<ServiceChargeDTO> voidServiceCharge(@RequestParam("serviceChargeId") Long serviceChargeId) {
-        return ResponseEntity.ok(service.voidServiceCharge(serviceChargeId));
-    }
+  @PatchMapping("/voidservicecharge")
+  public ResponseEntity<ServiceChargeDTO> voidServiceCharge(
+      @RequestParam("serviceChargeId") Long serviceChargeId) {
+    return ResponseEntity.ok(service.voidServiceCharge(serviceChargeId));
+  }
+
+  @DeleteMapping("/deleteservicecharge")
+  public ResponseEntity<Void> deleteServiceCharge(@RequestParam("serviceChargeId") Long id) {
+    service.deleteServiceCharge(id);
+    return ResponseEntity.noContent().build();
+  }
 }

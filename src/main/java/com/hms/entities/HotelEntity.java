@@ -1,13 +1,11 @@
 package com.hms.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.Data;
-import lombok.ToString;
-import lombok.EqualsAndHashCode;
 import jakarta.validation.constraints.*;
 import java.time.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /** Maps the hotels table. Relationships are unidirectional; use DTOs at API boundaries. */
 @AllArgsConstructor

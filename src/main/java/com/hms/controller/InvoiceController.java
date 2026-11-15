@@ -15,45 +15,55 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class InvoiceController {
 
-    private final InvoiceService service;
+  private final InvoiceService service;
 
-    @GetMapping
-    public String healthCheck() {
-        return "Invoice controller is running";
-    }
+  @GetMapping
+  public String healthCheck() {
+    return "Invoice controller is running";
+  }
 
-    @GetMapping("/getselectedinvoice")
-    public ResponseEntity<InvoiceDTO> getSelectedInvoice(@RequestParam("invoiceId") Long invoiceId) {
-        return ResponseEntity.ok(service.getSelectedInvoice(invoiceId));
-    }
+  @GetMapping("/getselectedinvoice")
+  public ResponseEntity<InvoiceDTO> getSelectedInvoice(@RequestParam("invoiceId") Long invoiceId) {
+    return ResponseEntity.ok(service.getSelectedInvoice(invoiceId));
+  }
 
-    @GetMapping("/getallinvoices")
-    public ResponseEntity<List<InvoiceDTO>> getAllInvoices() {
-        return ResponseEntity.ok(service.getAllInvoices());
-    }
+  @GetMapping("/getallinvoices")
+  public ResponseEntity<List<InvoiceDTO>> getAllInvoices() {
+    return ResponseEntity.ok(service.getAllInvoices());
+  }
 
-    @PostMapping("/addinvoice")
-    public ResponseEntity<InvoiceDTO> addInvoice(@Valid @RequestBody InvoiceDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addInvoice(dto));
-    }
+  @PostMapping("/addinvoice")
+  public ResponseEntity<InvoiceDTO> addInvoice(@Valid @RequestBody InvoiceDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addInvoice(dto));
+  }
 
-    @PutMapping("/updateinvoice")
-    public ResponseEntity<InvoiceDTO> updateInvoice(@RequestParam("invoiceId") Long invoiceId, @Valid @RequestBody InvoiceDTO dto) {
-        return ResponseEntity.ok(service.updateInvoice(invoiceId, dto));
-    }
+  @RequestMapping(
+      value = "/updateinvoice",
+      method = {RequestMethod.PUT, RequestMethod.PATCH})
+  public ResponseEntity<InvoiceDTO> updateInvoice(
+      @RequestParam("invoiceId") Long invoiceId, @Valid @RequestBody InvoiceDTO dto) {
+    return ResponseEntity.ok(service.updateInvoice(invoiceId, dto));
+  }
 
-    @PatchMapping("/issueinvoice")
-    public ResponseEntity<InvoiceDTO> issueInvoice(@RequestParam("invoiceId") Long invoiceId) {
-        return ResponseEntity.ok(service.issueInvoice(invoiceId));
-    }
+  @PatchMapping("/issueinvoice")
+  public ResponseEntity<InvoiceDTO> issueInvoice(@RequestParam("invoiceId") Long invoiceId) {
+    return ResponseEntity.ok(service.issueInvoice(invoiceId));
+  }
 
-    @PatchMapping("/voidinvoice")
-    public ResponseEntity<InvoiceDTO> voidInvoice(@RequestParam("invoiceId") Long invoiceId) {
-        return ResponseEntity.ok(service.voidInvoice(invoiceId));
-    }
+  @PatchMapping("/voidinvoice")
+  public ResponseEntity<InvoiceDTO> voidInvoice(@RequestParam("invoiceId") Long invoiceId) {
+    return ResponseEntity.ok(service.voidInvoice(invoiceId));
+  }
 
-    @GetMapping("/getoutstandingbalance")
-    public ResponseEntity<BigDecimal> getOutstandingBalance(@RequestParam("invoiceId") Long invoiceId) {
-        return ResponseEntity.ok(service.getOutstandingBalance(invoiceId));
-    }
+  @GetMapping("/getoutstandingbalance")
+  public ResponseEntity<BigDecimal> getOutstandingBalance(
+      @RequestParam("invoiceId") Long invoiceId) {
+    return ResponseEntity.ok(service.getOutstandingBalance(invoiceId));
+  }
+
+  @DeleteMapping("/deleteinvoice")
+  public ResponseEntity<Void> deleteInvoice(@RequestParam("invoiceId") Long id) {
+    service.deleteInvoice(id);
+    return ResponseEntity.noContent().build();
+  }
 }

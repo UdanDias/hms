@@ -193,4 +193,15 @@ public class RoomServiceImpl implements RoomService {
     roomDao.flush();
     return entityDTOConvert.convertRoomEntityToRoomDTO(roomEntity);
   }
+
+  @Override
+  public void deleteRoom(Long id) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    var entity =
+        roomDao.findById(id).orElseThrow(() -> new RoomNotFoundException("Room not found"));
+    var dto = entityDTOConvert.convertRoomEntityToRoomDTO(entity);
+    dto.setOperationalStatus("retired");
+    updateRoom(id, dto);
+  }
 }

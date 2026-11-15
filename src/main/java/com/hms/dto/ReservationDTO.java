@@ -12,34 +12,33 @@ import lombok.NoArgsConstructor;
 @Data
 public class ReservationDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long hotelId;
+  private Long hotelId;
 
-    private String bookingReference;
+  private String bookingReference;
 
-    private Long bookerCustomerId;
+  private Long bookerCustomerId;
 
-    private String status;
+  private String status;
 
-    private String bookingSource;
+  private String bookingSource;
 
-    private String currencyCode;
+  private String currencyCode;
 
-    private String specialRequests;
+  private String specialRequests;
 
-    private Long createdById;
+  private Long createdById;
 
-    private LocalDateTime confirmedAt;
+  private LocalDateTime confirmedAt;
 
-    private LocalDateTime cancelledAt;
+  private LocalDateTime cancelledAt;
 
-    private String cancellationReason;
+  private String cancellationReason;
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 }

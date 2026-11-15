@@ -14,25 +14,25 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class RefundController {
 
-    private final RefundService service;
+  private final RefundService service;
 
-    @GetMapping
-    public String healthCheck() {
-        return "Refund controller is running";
-    }
+  @GetMapping
+  public String healthCheck() {
+    return "Refund controller is running";
+  }
 
-    @GetMapping("/getselectedrefund")
-    public ResponseEntity<RefundDTO> getSelectedRefund(@RequestParam("refundId") Long refundId) {
-        return ResponseEntity.ok(service.getSelectedRefund(refundId));
-    }
+  @GetMapping("/getselectedrefund")
+  public ResponseEntity<RefundDTO> getSelectedRefund(@RequestParam("refundId") Long refundId) {
+    return ResponseEntity.ok(service.getSelectedRefund(refundId));
+  }
 
-    @GetMapping("/getallrefunds")
-    public ResponseEntity<List<RefundDTO>> getAllRefunds() {
-        return ResponseEntity.ok(service.getAllRefunds());
-    }
+  @GetMapping("/getallrefunds")
+  public ResponseEntity<List<RefundDTO>> getAllRefunds() {
+    return ResponseEntity.ok(service.getAllRefunds());
+  }
 
-    @PostMapping("/addrefund")
-    public ResponseEntity<RefundDTO> addRefund(@Valid @RequestBody RefundDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addRefund(dto));
-    }
+  @PostMapping("/addrefund")
+  public ResponseEntity<RefundDTO> addRefund(@Valid @RequestBody RefundDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addRefund(dto));
+  }
 }

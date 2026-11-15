@@ -12,26 +12,25 @@ import lombok.NoArgsConstructor;
 @Data
 public class AuditLogDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long hotelId;
+  private Long hotelId;
 
-    private Long actorUserId;
+  private Long actorUserId;
 
-    private String action;
+  private String action;
 
-    private String entityType;
+  private String entityType;
 
-    private Long entityId;
+  private Long entityId;
 
-    private String oldValues;
+  private String oldValues;
 
-    private String newValues;
+  private String newValues;
 
-    private String requestId;
+  private String requestId;
 
-    private LocalDateTime occurredAt;
+  private LocalDateTime occurredAt;
 }

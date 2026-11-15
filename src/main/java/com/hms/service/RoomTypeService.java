@@ -11,4 +11,6 @@ public interface RoomTypeService {
   RoomTypeDTO addRoomType(RoomTypeDTO dto);
 
   RoomTypeDTO updateRoomType(Long roomTypeId, RoomTypeDTO dto);
+
+  void deleteRoomType(Long id);
 }

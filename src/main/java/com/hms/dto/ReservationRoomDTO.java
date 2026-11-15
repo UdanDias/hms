@@ -14,48 +14,47 @@ import lombok.NoArgsConstructor;
 @Data
 public class ReservationRoomDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long reservationId;
+  private Long reservationId;
 
-    private Long roomTypeId;
+  private Long roomTypeId;
 
-    private Long roomId;
+  private Long roomId;
 
-    private LocalDate checkInDate;
+  private LocalDate checkInDate;
 
-    private LocalDate checkOutDate;
+  private LocalDate checkOutDate;
 
-    private Integer adults;
+  private Integer adults;
 
-    private Integer children;
+  private Integer children;
 
-    private BigDecimal nightlyRate;
+  private BigDecimal nightlyRate;
 
-    private BigDecimal extraPersonTotal;
+  private BigDecimal extraPersonTotal;
 
-    private BigDecimal discountAmount;
+  private BigDecimal discountAmount;
 
-    private BigDecimal taxAmount;
+  private BigDecimal taxAmount;
 
-    private BigDecimal serviceChargeAmount;
+  private BigDecimal serviceChargeAmount;
 
-    private BigDecimal totalAmount;
+  private BigDecimal totalAmount;
 
-    private String cancellationPolicySnapshot;
+  private String cancellationPolicySnapshot;
 
-    private String status;
+  private String status;
 
-    private LocalDateTime actualCheckInAt;
+  private LocalDateTime actualCheckInAt;
 
-    private LocalDateTime actualCheckOutAt;
+  private LocalDateTime actualCheckOutAt;
 
-    private Long accommodationId;
+  private Long accommodationId;
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 }

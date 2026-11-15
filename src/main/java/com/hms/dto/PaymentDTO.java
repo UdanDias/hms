@@ -13,36 +13,35 @@ import lombok.NoArgsConstructor;
 @Data
 public class PaymentDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long hotelId;
+  private Long hotelId;
 
-    private Long reservationId;
+  private Long reservationId;
 
-    private Long invoiceId;
+  private Long invoiceId;
 
-    private String receiptNumber;
+  private String receiptNumber;
 
-    private BigDecimal amount;
+  private BigDecimal amount;
 
-    private String currencyCode;
+  private String currencyCode;
 
-    private String paymentMethod;
+  private String paymentMethod;
 
-    private String referenceNumber;
+  private String referenceNumber;
 
-    private LocalDateTime paidAt;
+  private LocalDateTime paidAt;
 
-    private String status;
+  private String status;
 
-    private Long receivedById;
+  private Long receivedById;
 
-    private String notes;
+  private String notes;
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 }

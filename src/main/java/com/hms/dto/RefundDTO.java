@@ -13,30 +13,29 @@ import lombok.NoArgsConstructor;
 @Data
 public class RefundDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long paymentId;
+  private Long paymentId;
 
-    private String refundNumber;
+  private String refundNumber;
 
-    private BigDecimal amount;
+  private BigDecimal amount;
 
-    private String refundMethod;
+  private String refundMethod;
 
-    private String referenceNumber;
+  private String referenceNumber;
 
-    private String reason;
+  private String reason;
 
-    private String status;
+  private String status;
 
-    private LocalDateTime refundedAt;
+  private LocalDateTime refundedAt;
 
-    private Long processedById;
+  private Long processedById;
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 }

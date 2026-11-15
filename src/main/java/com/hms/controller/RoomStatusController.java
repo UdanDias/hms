@@ -14,25 +14,26 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class RoomStatusController {
 
-    private final RoomStatusService service;
+  private final RoomStatusService service;
 
-    @GetMapping
-    public String healthCheck() {
-        return "RoomStatus controller is running";
-    }
+  @GetMapping
+  public String healthCheck() {
+    return "RoomStatus controller is running";
+  }
 
-    @GetMapping("/getselectedroomstatus")
-    public ResponseEntity<RoomStatusDTO> getSelectedRoomStatus(@RequestParam("roomStatusId") Long roomStatusId) {
-        return ResponseEntity.ok(service.getSelectedRoomStatus(roomStatusId));
-    }
+  @GetMapping("/getselectedroomstatus")
+  public ResponseEntity<RoomStatusDTO> getSelectedRoomStatus(
+      @RequestParam("roomStatusId") Long roomStatusId) {
+    return ResponseEntity.ok(service.getSelectedRoomStatus(roomStatusId));
+  }
 
-    @GetMapping("/getallroomstatuses")
-    public ResponseEntity<List<RoomStatusDTO>> getAllRoomStatuses() {
-        return ResponseEntity.ok(service.getAllRoomStatuses());
-    }
+  @GetMapping("/getallroomstatuses")
+  public ResponseEntity<List<RoomStatusDTO>> getAllRoomStatuses() {
+    return ResponseEntity.ok(service.getAllRoomStatuses());
+  }
 
-    @PostMapping("/addroomstatus")
-    public ResponseEntity<RoomStatusDTO> addRoomStatus(@Valid @RequestBody RoomStatusDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addRoomStatus(dto));
-    }
+  @PostMapping("/addroomstatus")
+  public ResponseEntity<RoomStatusDTO> addRoomStatus(@Valid @RequestBody RoomStatusDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addRoomStatus(dto));
+  }
 }

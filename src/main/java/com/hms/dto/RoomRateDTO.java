@@ -14,26 +14,25 @@ import lombok.NoArgsConstructor;
 @Data
 public class RoomRateDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long roomTypeId;
+  private Long roomTypeId;
 
-    private LocalDate stayDate;
+  private LocalDate stayDate;
 
-    private BigDecimal nightlyRate;
+  private BigDecimal nightlyRate;
 
-    private BigDecimal extraAdultRate;
+  private BigDecimal extraAdultRate;
 
-    private BigDecimal extraChildRate;
+  private BigDecimal extraChildRate;
 
-    private Integer minimumNights;
+  private Integer minimumNights;
 
-    private Boolean stopSell;
+  private Boolean stopSell;
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 }

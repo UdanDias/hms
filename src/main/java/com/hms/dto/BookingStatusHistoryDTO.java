@@ -12,22 +12,21 @@ import lombok.NoArgsConstructor;
 @Data
 public class BookingStatusHistoryDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long reservationId;
+  private Long reservationId;
 
-    private Long reservationRoomId;
+  private Long reservationRoomId;
 
-    private String oldStatus;
+  private String oldStatus;
 
-    private String newStatus;
+  private String newStatus;
 
-    private String reason;
+  private String reason;
 
-    private Long changedById;
+  private Long changedById;
 
-    private LocalDateTime changedAt;
+  private LocalDateTime changedAt;
 }

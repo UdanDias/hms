@@ -14,44 +14,43 @@ import lombok.NoArgsConstructor;
 @Data
 public class InvoiceDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long hotelId;
+  private Long hotelId;
 
-    private Long reservationId;
+  private Long reservationId;
 
-    private String invoiceNumber;
+  private String invoiceNumber;
 
-    private Long billedCustomerId;
+  private Long billedCustomerId;
 
-    private String billingNameSnapshot;
+  private String billingNameSnapshot;
 
-    private String billingAddressSnapshot;
+  private String billingAddressSnapshot;
 
-    private String currencyCode;
+  private String currencyCode;
 
-    private LocalDateTime issuedAt;
+  private LocalDateTime issuedAt;
 
-    private LocalDate dueDate;
+  private LocalDate dueDate;
 
-    private BigDecimal subtotal;
+  private BigDecimal subtotal;
 
-    private BigDecimal discountTotal;
+  private BigDecimal discountTotal;
 
-    private BigDecimal taxTotal;
+  private BigDecimal taxTotal;
 
-    private BigDecimal serviceChargeTotal;
+  private BigDecimal serviceChargeTotal;
 
-    private BigDecimal grandTotal;
+  private BigDecimal grandTotal;
 
-    private String status;
+  private String status;
 
-    private Long createdById;
+  private Long createdById;
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 }

@@ -1,14 +1,14 @@
 package com.hms.entities;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.Data;
-import lombok.ToString;
 import lombok.EqualsAndHashCode;
-import jakarta.validation.constraints.*;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /** Maps the room_types table. Relationships are unidirectional; use DTOs at API boundaries. */
 @AllArgsConstructor

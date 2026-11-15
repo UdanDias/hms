@@ -18,4 +18,6 @@ public interface InvoiceService {
   InvoiceDTO voidInvoice(Long invoiceId);
 
   BigDecimal getOutstandingBalance(Long invoiceId);
+
+  void deleteInvoice(Long id);
 }

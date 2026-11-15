@@ -11,10 +11,9 @@ import lombok.NoArgsConstructor;
 @Data
 public class RoleDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long roleId;
+  private Long roleId;
 
-    private String type;
+  private String type;
 }

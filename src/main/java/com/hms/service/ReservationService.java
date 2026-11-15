@@ -19,4 +19,6 @@ public interface ReservationService {
   ReservationDTO checkInReservation(Long reservationId);
 
   ReservationDTO checkOutReservation(Long reservationId);
+
+  void deleteReservation(Long id);
 }

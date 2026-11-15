@@ -15,30 +15,32 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class PaymentController {
 
-    private final PaymentService service;
+  private final PaymentService service;
 
-    @GetMapping
-    public String healthCheck() {
-        return "Payment controller is running";
-    }
+  @GetMapping
+  public String healthCheck() {
+    return "Payment controller is running";
+  }
 
-    @GetMapping("/getselectedpayment")
-    public ResponseEntity<PaymentDTO> getSelectedPayment(@RequestParam("paymentId") Long paymentId) {
-        return ResponseEntity.ok(service.getSelectedPayment(paymentId));
-    }
+  @GetMapping("/getselectedpayment")
+  public ResponseEntity<PaymentDTO> getSelectedPayment(@RequestParam("paymentId") Long paymentId) {
+    return ResponseEntity.ok(service.getSelectedPayment(paymentId));
+  }
 
-    @GetMapping("/getallpayments")
-    public ResponseEntity<List<PaymentDTO>> getAllPayments() {
-        return ResponseEntity.ok(service.getAllPayments());
-    }
+  @GetMapping("/getallpayments")
+  public ResponseEntity<List<PaymentDTO>> getAllPayments() {
+    return ResponseEntity.ok(service.getAllPayments());
+  }
 
-    @PostMapping("/addpayment")
-    public ResponseEntity<PaymentDTO> addPayment(@Valid @RequestBody PaymentDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addPayment(dto));
-    }
+  @PostMapping("/addpayment")
+  public ResponseEntity<PaymentDTO> addPayment(@Valid @RequestBody PaymentDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addPayment(dto));
+  }
 
-    @PatchMapping("/allocatepayment")
-    public ResponseEntity<PaymentDTO> allocatePayment(@RequestParam("paymentId") Long paymentId, @Valid @RequestBody PaymentAllocationRequestDTO request) {
-        return ResponseEntity.ok(service.allocatePayment(paymentId, request.getInvoiceId()));
-    }
+  @PatchMapping("/allocatepayment")
+  public ResponseEntity<PaymentDTO> allocatePayment(
+      @RequestParam("paymentId") Long paymentId,
+      @Valid @RequestBody PaymentAllocationRequestDTO request) {
+    return ResponseEntity.ok(service.allocatePayment(paymentId, request.getInvoiceId()));
+  }
 }

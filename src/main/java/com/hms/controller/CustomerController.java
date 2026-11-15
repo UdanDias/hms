@@ -14,36 +14,40 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CustomerController {
 
-    private final CustomerService service;
+  private final CustomerService service;
 
-    @GetMapping
-    public String healthCheck() {
-        return "Customer controller is running";
-    }
+  @GetMapping
+  public String healthCheck() {
+    return "Customer controller is running";
+  }
 
-    @GetMapping("/getselectedcustomer")
-    public ResponseEntity<CustomerDTO> getSelectedCustomer(@RequestParam("customerId") Long customerId) {
-        return ResponseEntity.ok(service.getSelectedCustomer(customerId));
-    }
+  @GetMapping("/getselectedcustomer")
+  public ResponseEntity<CustomerDTO> getSelectedCustomer(
+      @RequestParam("customerId") Long customerId) {
+    return ResponseEntity.ok(service.getSelectedCustomer(customerId));
+  }
 
-    @GetMapping("/getallcustomers")
-    public ResponseEntity<List<CustomerDTO>> getAllCustomers() {
-        return ResponseEntity.ok(service.getAllCustomers());
-    }
+  @GetMapping("/getallcustomers")
+  public ResponseEntity<List<CustomerDTO>> getAllCustomers() {
+    return ResponseEntity.ok(service.getAllCustomers());
+  }
 
-    @PostMapping("/addcustomer")
-    public ResponseEntity<CustomerDTO> addCustomer(@Valid @RequestBody CustomerDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addCustomer(dto));
-    }
+  @PostMapping("/addcustomer")
+  public ResponseEntity<CustomerDTO> addCustomer(@Valid @RequestBody CustomerDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addCustomer(dto));
+  }
 
-    @PutMapping("/updatecustomer")
-    public ResponseEntity<CustomerDTO> updateCustomer(@RequestParam("customerId") Long customerId, @Valid @RequestBody CustomerDTO dto) {
-        return ResponseEntity.ok(service.updateCustomer(customerId, dto));
-    }
+  @RequestMapping(
+      value = "/updatecustomer",
+      method = {RequestMethod.PUT, RequestMethod.PATCH})
+  public ResponseEntity<CustomerDTO> updateCustomer(
+      @RequestParam("customerId") Long customerId, @Valid @RequestBody CustomerDTO dto) {
+    return ResponseEntity.ok(service.updateCustomer(customerId, dto));
+  }
 
-    @DeleteMapping("/deletecustomer")
-    public ResponseEntity<Void> deleteCustomer(@RequestParam("customerId") Long customerId) {
-        service.deleteCustomer(customerId);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/deletecustomer")
+  public ResponseEntity<Void> deleteCustomer(@RequestParam("customerId") Long customerId) {
+    service.deleteCustomer(customerId);
+    return ResponseEntity.noContent().build();
+  }
 }

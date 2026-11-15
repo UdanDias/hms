@@ -438,4 +438,9 @@ public class ReservationRoomServiceImpl implements ReservationRoomService {
     return a.getCheckInDate().isBefore(b.getCheckOutDate())
         && b.getCheckInDate().isBefore(a.getCheckOutDate());
   }
+
+  @Override
+  public void deleteReservationRoom(Long id) {
+    cancelReservationRoom(id, "Cancelled through delete endpoint");
+  }
 }

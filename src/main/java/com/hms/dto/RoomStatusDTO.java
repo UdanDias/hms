@@ -11,10 +11,9 @@ import lombok.NoArgsConstructor;
 @Data
 public class RoomStatusDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long statusId;
+  private Long statusId;
 
-    private String status;
+  private String status;
 }

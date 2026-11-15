@@ -15,35 +15,46 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class RoomController {
 
-    private final RoomService service;
+  private final RoomService service;
 
-    @GetMapping
-    public String healthCheck() {
-        return "Room controller is running";
-    }
+  @GetMapping
+  public String healthCheck() {
+    return "Room controller is running";
+  }
 
-    @GetMapping("/getselectedroom")
-    public ResponseEntity<RoomDTO> getSelectedRoom(@RequestParam("roomId") Long roomId) {
-        return ResponseEntity.ok(service.getSelectedRoom(roomId));
-    }
+  @GetMapping("/getselectedroom")
+  public ResponseEntity<RoomDTO> getSelectedRoom(@RequestParam("roomId") Long roomId) {
+    return ResponseEntity.ok(service.getSelectedRoom(roomId));
+  }
 
-    @GetMapping("/getallrooms")
-    public ResponseEntity<List<RoomDTO>> getAllRooms() {
-        return ResponseEntity.ok(service.getAllRooms());
-    }
+  @GetMapping("/getallrooms")
+  public ResponseEntity<List<RoomDTO>> getAllRooms() {
+    return ResponseEntity.ok(service.getAllRooms());
+  }
 
-    @PostMapping("/addroom")
-    public ResponseEntity<RoomDTO> addRoom(@Valid @RequestBody RoomDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addRoom(dto));
-    }
+  @PostMapping("/addroom")
+  public ResponseEntity<RoomDTO> addRoom(@Valid @RequestBody RoomDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addRoom(dto));
+  }
 
-    @PutMapping("/updateroom")
-    public ResponseEntity<RoomDTO> updateRoom(@RequestParam("roomId") Long roomId, @Valid @RequestBody RoomDTO dto) {
-        return ResponseEntity.ok(service.updateRoom(roomId, dto));
-    }
+  @RequestMapping(
+      value = "/updateroom",
+      method = {RequestMethod.PUT, RequestMethod.PATCH})
+  public ResponseEntity<RoomDTO> updateRoom(
+      @RequestParam("roomId") Long roomId, @Valid @RequestBody RoomDTO dto) {
+    return ResponseEntity.ok(service.updateRoom(roomId, dto));
+  }
 
-    @PatchMapping("/updatehousekeepingstatus")
-    public ResponseEntity<RoomDTO> updateHousekeepingStatus(@RequestParam("roomId") Long roomId, @Valid @RequestBody HousekeepingStatusRequestDTO request) {
-        return ResponseEntity.ok(service.updateHousekeepingStatus(roomId, request.getStatus()));
-    }
+  @PatchMapping("/updatehousekeepingstatus")
+  public ResponseEntity<RoomDTO> updateHousekeepingStatus(
+      @RequestParam("roomId") Long roomId,
+      @Valid @RequestBody HousekeepingStatusRequestDTO request) {
+    return ResponseEntity.ok(service.updateHousekeepingStatus(roomId, request.getStatus()));
+  }
+
+  @DeleteMapping("/deleteroom")
+  public ResponseEntity<Void> deleteRoom(@RequestParam("roomId") Long id) {
+    service.deleteRoom(id);
+    return ResponseEntity.noContent().build();
+  }
 }

@@ -14,30 +14,39 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserService service;
+  private final UserService service;
 
-    @GetMapping
-    public String healthCheck() {
-        return "User controller is running";
-    }
+  @GetMapping
+  public String healthCheck() {
+    return "User controller is running";
+  }
 
-    @GetMapping("/getselecteduser")
-    public ResponseEntity<UserDTO> getSelectedUser(@RequestParam("userId") Long userId) {
-        return ResponseEntity.ok(service.getSelectedUser(userId));
-    }
+  @GetMapping("/getselecteduser")
+  public ResponseEntity<UserDTO> getSelectedUser(@RequestParam("userId") Long userId) {
+    return ResponseEntity.ok(service.getSelectedUser(userId));
+  }
 
-    @GetMapping("/getallusers")
-    public ResponseEntity<List<UserDTO>> getAllUsers() {
-        return ResponseEntity.ok(service.getAllUsers());
-    }
+  @GetMapping("/getallusers")
+  public ResponseEntity<List<UserDTO>> getAllUsers() {
+    return ResponseEntity.ok(service.getAllUsers());
+  }
 
-    @PostMapping("/adduser")
-    public ResponseEntity<UserDTO> addUser(@Valid @RequestBody UserDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addUser(dto));
-    }
+  @PostMapping("/adduser")
+  public ResponseEntity<UserDTO> addUser(@Valid @RequestBody UserDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addUser(dto));
+  }
 
-    @PutMapping("/updateuser")
-    public ResponseEntity<UserDTO> updateUser(@RequestParam("userId") Long userId, @Valid @RequestBody UserDTO dto) {
-        return ResponseEntity.ok(service.updateUser(userId, dto));
-    }
+  @RequestMapping(
+      value = "/updateuser",
+      method = {RequestMethod.PUT, RequestMethod.PATCH})
+  public ResponseEntity<UserDTO> updateUser(
+      @RequestParam("userId") Long userId, @Valid @RequestBody UserDTO dto) {
+    return ResponseEntity.ok(service.updateUser(userId, dto));
+  }
+
+  @DeleteMapping("/deleteuser")
+  public ResponseEntity<Void> deleteUser(@RequestParam("userId") Long id) {
+    service.deleteUser(id);
+    return ResponseEntity.noContent().build();
+  }
 }

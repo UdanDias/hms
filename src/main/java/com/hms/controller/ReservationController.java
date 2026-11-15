@@ -15,50 +15,65 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ReservationController {
 
-    private final ReservationService service;
+  private final ReservationService service;
 
-    @GetMapping
-    public String healthCheck() {
-        return "Reservation controller is running";
-    }
+  @GetMapping
+  public String healthCheck() {
+    return "Reservation controller is running";
+  }
 
-    @GetMapping("/getselectedreservation")
-    public ResponseEntity<ReservationDTO> getSelectedReservation(@RequestParam("reservationId") Long reservationId) {
-        return ResponseEntity.ok(service.getSelectedReservation(reservationId));
-    }
+  @GetMapping("/getselectedreservation")
+  public ResponseEntity<ReservationDTO> getSelectedReservation(
+      @RequestParam("reservationId") Long reservationId) {
+    return ResponseEntity.ok(service.getSelectedReservation(reservationId));
+  }
 
-    @GetMapping("/getallreservations")
-    public ResponseEntity<List<ReservationDTO>> getAllReservations() {
-        return ResponseEntity.ok(service.getAllReservations());
-    }
+  @GetMapping("/getallreservations")
+  public ResponseEntity<List<ReservationDTO>> getAllReservations() {
+    return ResponseEntity.ok(service.getAllReservations());
+  }
 
-    @PostMapping("/addreservation")
-    public ResponseEntity<ReservationDTO> addReservation(@Valid @RequestBody ReservationDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addReservation(dto));
-    }
+  @PostMapping("/addreservation")
+  public ResponseEntity<ReservationDTO> addReservation(@Valid @RequestBody ReservationDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addReservation(dto));
+  }
 
-    @PutMapping("/updatereservation")
-    public ResponseEntity<ReservationDTO> updateReservation(@RequestParam("reservationId") Long reservationId, @Valid @RequestBody ReservationDTO dto) {
-        return ResponseEntity.ok(service.updateReservation(reservationId, dto));
-    }
+  @RequestMapping(
+      value = "/updatereservation",
+      method = {RequestMethod.PUT, RequestMethod.PATCH})
+  public ResponseEntity<ReservationDTO> updateReservation(
+      @RequestParam("reservationId") Long reservationId, @Valid @RequestBody ReservationDTO dto) {
+    return ResponseEntity.ok(service.updateReservation(reservationId, dto));
+  }
 
-    @PatchMapping("/confirmreservation")
-    public ResponseEntity<ReservationDTO> confirmReservation(@RequestParam("reservationId") Long reservationId) {
-        return ResponseEntity.ok(service.confirmReservation(reservationId));
-    }
+  @PatchMapping("/confirmreservation")
+  public ResponseEntity<ReservationDTO> confirmReservation(
+      @RequestParam("reservationId") Long reservationId) {
+    return ResponseEntity.ok(service.confirmReservation(reservationId));
+  }
 
-    @PatchMapping("/cancelreservation")
-    public ResponseEntity<ReservationDTO> cancelReservation(@RequestParam("reservationId") Long reservationId, @Valid @RequestBody ReasonRequestDTO request) {
-        return ResponseEntity.ok(service.cancelReservation(reservationId, request.getReason()));
-    }
+  @PatchMapping("/cancelreservation")
+  public ResponseEntity<ReservationDTO> cancelReservation(
+      @RequestParam("reservationId") Long reservationId,
+      @Valid @RequestBody ReasonRequestDTO request) {
+    return ResponseEntity.ok(service.cancelReservation(reservationId, request.getReason()));
+  }
 
-    @PatchMapping("/checkinreservation")
-    public ResponseEntity<ReservationDTO> checkInReservation(@RequestParam("reservationId") Long reservationId) {
-        return ResponseEntity.ok(service.checkInReservation(reservationId));
-    }
+  @PatchMapping("/checkinreservation")
+  public ResponseEntity<ReservationDTO> checkInReservation(
+      @RequestParam("reservationId") Long reservationId) {
+    return ResponseEntity.ok(service.checkInReservation(reservationId));
+  }
 
-    @PatchMapping("/checkoutreservation")
-    public ResponseEntity<ReservationDTO> checkOutReservation(@RequestParam("reservationId") Long reservationId) {
-        return ResponseEntity.ok(service.checkOutReservation(reservationId));
-    }
+  @PatchMapping("/checkoutreservation")
+  public ResponseEntity<ReservationDTO> checkOutReservation(
+      @RequestParam("reservationId") Long reservationId) {
+    return ResponseEntity.ok(service.checkOutReservation(reservationId));
+  }
+
+  @DeleteMapping("/deletereservation")
+  public ResponseEntity<Void> deleteReservation(@RequestParam("reservationId") Long id) {
+    service.deleteReservation(id);
+    return ResponseEntity.noContent().build();
+  }
 }

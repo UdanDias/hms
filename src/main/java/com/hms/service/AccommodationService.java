@@ -11,4 +11,6 @@ public interface AccommodationService {
   AccommodationDTO addAccommodation(AccommodationDTO dto);
 
   AccommodationDTO updateAccommodation(Long accommodationId, AccommodationDTO dto);
+
+  void deleteAccommodation(Long id);
 }

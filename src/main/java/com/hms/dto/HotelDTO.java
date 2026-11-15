@@ -13,34 +13,33 @@ import lombok.NoArgsConstructor;
 @Data
 public class HotelDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private String name;
+  private String name;
 
-    private String address;
+  private String address;
 
-    private String city;
+  private String city;
 
-    private String countryCode;
+  private String countryCode;
 
-    private String phone;
+  private String phone;
 
-    private String email;
+  private String email;
 
-    private String timezone;
+  private String timezone;
 
-    private String currencyCode;
+  private String currencyCode;
 
-    private LocalTime checkInTime;
+  private LocalTime checkInTime;
 
-    private LocalTime checkOutTime;
+  private LocalTime checkOutTime;
 
-    private Boolean isActive;
+  private Boolean isActive;
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 }

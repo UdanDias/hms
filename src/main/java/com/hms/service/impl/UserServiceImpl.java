@@ -128,4 +128,20 @@ public class UserServiceImpl implements UserService {
       userEntity.setPassword(passwordEncoder.encode(raw));
     }
   }
+
+  @Override
+  public void deleteUser(Long id) {
+    serviceSecurity.requireRoles("ADMIN");
+    hotelDao.lockAllForWrite();
+    var entity =
+        userDao.findById(id).orElseThrow(() -> new UserNotFoundException("User not found"));
+    validationUtil.require(
+        !serviceSecurity.getCurrentUser().getUserId().equals(id), "Cannot delete your own account");
+    validationUtil.require(
+        !"ADMIN".equals(entity.getRole().getType()) || userDao.findAdministrators().size() > 1,
+        "Cannot delete last administrator");
+    userDao.delete(entity);
+    auditRecorder.recordAction("DELETE", "User", id);
+    userDao.flush();
+  }
 }

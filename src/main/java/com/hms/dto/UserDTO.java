@@ -13,19 +13,18 @@ import lombok.ToString;
 @Data
 public class UserDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long userId;
+  private Long userId;
 
-    private String username;
+  private String username;
 
-    private String email;
+  private String email;
 
-    // Input only: never map a stored password hash into an outbound DTO.
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @ToString.Exclude
-    private String password;
+  // Input only: never map a stored password hash into an outbound DTO.
+  @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+  @ToString.Exclude
+  private String password;
 
-    private Long roleId;
+  private Long roleId;
 }

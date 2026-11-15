@@ -12,28 +12,27 @@ import lombok.NoArgsConstructor;
 @Data
 public class RoomTypeDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long hotelId;
+  private Long hotelId;
 
-    private String name;
+  private String name;
 
-    private String description;
+  private String description;
 
-    private Integer maxAdults;
+  private Integer maxAdults;
 
-    private Integer maxChildren;
+  private Integer maxChildren;
 
-    private Integer maxOccupancy;
+  private Integer maxOccupancy;
 
-    private String bedDescription;
+  private String bedDescription;
 
-    private Boolean isActive;
+  private Boolean isActive;
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 }

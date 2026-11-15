@@ -129,4 +129,17 @@ public class HotelServiceManagementServiceImpl implements HotelServiceManagement
         "Tax percentage must be between 0 and 100");
     return x;
   }
+
+  @Override
+  public void deleteHotelService(Long id) {
+    serviceSecurity.requireRoles("ADMIN", "MANAGER");
+    hotelDao.lockAllForWrite();
+    var entity =
+        hotelServiceDao
+            .findById(id)
+            .orElseThrow(() -> new HotelServiceNotFoundException("Service not found"));
+    entity.setIsActive(false);
+    auditRecorder.recordAction("DEACTIVATE", "HotelService", id);
+    hotelServiceDao.flush();
+  }
 }

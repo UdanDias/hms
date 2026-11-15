@@ -12,14 +12,13 @@ import lombok.NoArgsConstructor;
 @Data
 public class AccommodationDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long hotelId;
+  private Long hotelId;
 
-    private String type;
+  private String type;
 
-    private BigDecimal price;
+  private BigDecimal price;
 }

@@ -13,4 +13,6 @@ public interface RoomService {
   RoomDTO updateRoom(Long roomId, RoomDTO dto);
 
   RoomDTO updateHousekeepingStatus(Long roomId, String status);
+
+  void deleteRoom(Long id);
 }

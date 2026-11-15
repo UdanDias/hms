@@ -14,25 +14,25 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class RoleController {
 
-    private final RoleService service;
+  private final RoleService service;
 
-    @GetMapping
-    public String healthCheck() {
-        return "Role controller is running";
-    }
+  @GetMapping
+  public String healthCheck() {
+    return "Role controller is running";
+  }
 
-    @GetMapping("/getselectedrole")
-    public ResponseEntity<RoleDTO> getSelectedRole(@RequestParam("roleId") Long roleId) {
-        return ResponseEntity.ok(service.getSelectedRole(roleId));
-    }
+  @GetMapping("/getselectedrole")
+  public ResponseEntity<RoleDTO> getSelectedRole(@RequestParam("roleId") Long roleId) {
+    return ResponseEntity.ok(service.getSelectedRole(roleId));
+  }
 
-    @GetMapping("/getallroles")
-    public ResponseEntity<List<RoleDTO>> getAllRoles() {
-        return ResponseEntity.ok(service.getAllRoles());
-    }
+  @GetMapping("/getallroles")
+  public ResponseEntity<List<RoleDTO>> getAllRoles() {
+    return ResponseEntity.ok(service.getAllRoles());
+  }
 
-    @PostMapping("/addrole")
-    public ResponseEntity<RoleDTO> addRole(@Valid @RequestBody RoleDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addRole(dto));
-    }
+  @PostMapping("/addrole")
+  public ResponseEntity<RoleDTO> addRole(@Valid @RequestBody RoleDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addRole(dto));
+  }
 }

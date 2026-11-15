@@ -13,36 +13,35 @@ import lombok.NoArgsConstructor;
 @Data
 public class ServiceChargeDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long reservationId;
+  private Long reservationId;
 
-    private Long reservationRoomId;
+  private Long reservationRoomId;
 
-    private Long serviceId;
+  private Long serviceId;
 
-    private String descriptionSnapshot;
+  private String descriptionSnapshot;
 
-    private BigDecimal quantity;
+  private BigDecimal quantity;
 
-    private BigDecimal unitPrice;
+  private BigDecimal unitPrice;
 
-    private BigDecimal discountAmount;
+  private BigDecimal discountAmount;
 
-    private BigDecimal taxAmount;
+  private BigDecimal taxAmount;
 
-    private BigDecimal totalAmount;
+  private BigDecimal totalAmount;
 
-    private LocalDateTime providedAt;
+  private LocalDateTime providedAt;
 
-    private String status;
+  private String status;
 
-    private Long recordedById;
+  private Long recordedById;
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 }

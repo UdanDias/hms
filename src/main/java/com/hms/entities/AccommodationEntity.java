@@ -2,13 +2,13 @@ package com.hms.entities;
 
 import com.hms.entities.enums.*;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.Data;
-import lombok.ToString;
-import lombok.EqualsAndHashCode;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /** Maps the accomodation table. Relationships are unidirectional; use DTOs at API boundaries. */
 @AllArgsConstructor

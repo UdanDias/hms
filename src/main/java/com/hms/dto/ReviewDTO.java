@@ -12,34 +12,33 @@ import lombok.NoArgsConstructor;
 @Data
 public class ReviewDTO implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
-    private Long id;
+  private Long id;
 
-    private Long reservationId;
+  private Long reservationId;
 
-    private Long customerId;
+  private Long customerId;
 
-    private Integer rating;
+  private Integer rating;
 
-    private String title;
+  private String title;
 
-    private String comment;
+  private String comment;
 
-    private String moderationStatus;
+  private String moderationStatus;
 
-    private Long moderatedById;
+  private Long moderatedById;
 
-    private LocalDateTime moderatedAt;
+  private LocalDateTime moderatedAt;
 
-    private String managementReply;
+  private String managementReply;
 
-    private Long repliedById;
+  private Long repliedById;
 
-    private LocalDateTime repliedAt;
+  private LocalDateTime repliedAt;
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
+  private LocalDateTime updatedAt;
 }

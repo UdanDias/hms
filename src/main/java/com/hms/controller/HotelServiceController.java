@@ -14,30 +14,41 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class HotelServiceController {
 
-    private final HotelServiceManagementService service;
+  private final HotelServiceManagementService service;
 
-    @GetMapping
-    public String healthCheck() {
-        return "HotelService controller is running";
-    }
+  @GetMapping
+  public String healthCheck() {
+    return "HotelService controller is running";
+  }
 
-    @GetMapping("/getselectedhotelservice")
-    public ResponseEntity<HotelServiceDTO> getSelectedHotelService(@RequestParam("hotelServiceId") Long hotelServiceId) {
-        return ResponseEntity.ok(service.getSelectedHotelService(hotelServiceId));
-    }
+  @GetMapping("/getselectedhotelservice")
+  public ResponseEntity<HotelServiceDTO> getSelectedHotelService(
+      @RequestParam("hotelServiceId") Long hotelServiceId) {
+    return ResponseEntity.ok(service.getSelectedHotelService(hotelServiceId));
+  }
 
-    @GetMapping("/getallhotelservices")
-    public ResponseEntity<List<HotelServiceDTO>> getAllHotelServices() {
-        return ResponseEntity.ok(service.getAllHotelServices());
-    }
+  @GetMapping("/getallhotelservices")
+  public ResponseEntity<List<HotelServiceDTO>> getAllHotelServices() {
+    return ResponseEntity.ok(service.getAllHotelServices());
+  }
 
-    @PostMapping("/addhotelservice")
-    public ResponseEntity<HotelServiceDTO> addHotelService(@Valid @RequestBody HotelServiceDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addHotelService(dto));
-    }
+  @PostMapping("/addhotelservice")
+  public ResponseEntity<HotelServiceDTO> addHotelService(@Valid @RequestBody HotelServiceDTO dto) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.addHotelService(dto));
+  }
 
-    @PutMapping("/updatehotelservice")
-    public ResponseEntity<HotelServiceDTO> updateHotelService(@RequestParam("hotelServiceId") Long hotelServiceId, @Valid @RequestBody HotelServiceDTO dto) {
-        return ResponseEntity.ok(service.updateHotelService(hotelServiceId, dto));
-    }
+  @RequestMapping(
+      value = "/updatehotelservice",
+      method = {RequestMethod.PUT, RequestMethod.PATCH})
+  public ResponseEntity<HotelServiceDTO> updateHotelService(
+      @RequestParam("hotelServiceId") Long hotelServiceId,
+      @Valid @RequestBody HotelServiceDTO dto) {
+    return ResponseEntity.ok(service.updateHotelService(hotelServiceId, dto));
+  }
+
+  @DeleteMapping("/deletehotelservice")
+  public ResponseEntity<Void> deleteHotelService(@RequestParam("hotelServiceId") Long id) {
+    service.deleteHotelService(id);
+    return ResponseEntity.noContent().build();
+  }
 }

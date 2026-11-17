@@ -32,7 +32,7 @@ public class JWTutils {
     if (bytes.length < 32)
       throw new IllegalArgumentException(
           "JWT secret must contain at least 32 random bytes, Base64 encoded");
-    if (ttl < 60 || ttl > 3600)
+    if (ttl < 60 || ttl > 10800)
       throw new IllegalArgumentException("JWT TTL must be 60 to 3600 seconds");
     key = Keys.hmacShaKeyFor(bytes);
     this.issuer = issuer;

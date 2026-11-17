@@ -24,7 +24,7 @@ public class CORSConfig {
     var cors = new CorsConfiguration();
     cors.setAllowedOrigins(allowed);
     cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-    cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+    cors.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Booking-Token"));
     cors.setAllowCredentials(false);
     cors.setMaxAge(3600L);
     var source = new UrlBasedCorsConfigurationSource();

@@ -65,6 +65,8 @@ public class WebSecurityConfig {
             a ->
                 a.requestMatchers(HttpMethod.POST, "/api/v1/auth/signin", "/api/v1/auth/signup")
                     .permitAll()
+                    .requestMatchers("/api/v1/web/public/**")
+                    .permitAll()
                     .requestMatchers("/error")
                     .permitAll()
                     .anyRequest()

@@ -64,6 +64,8 @@ public class OAuth2SecurityConfig {
             a ->
                 a.requestMatchers("/api/v1/auth/**")
                     .denyAll()
+                    .requestMatchers("/api/v1/web/public/**")
+                    .permitAll()
                     .requestMatchers("/error")
                     .permitAll()
                     .anyRequest()

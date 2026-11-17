@@ -16,7 +16,7 @@ public class ValidationUtil {
   }
 
   public void validate(Object entity) {
-    var errors = validator.validate(entity);
+    var errors = validator.validate(org.hibernate.Hibernate.unproxy(entity));
     if (!errors.isEmpty())
       throw new IllegalArgumentException(
           errors.stream()

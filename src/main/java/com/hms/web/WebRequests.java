@@ -8,19 +8,25 @@ import java.util.List;
 
 public final class WebRequests {
   public record Search(
-      @NotNull LocalDate checkIn, @NotNull LocalDate checkOut, @Min(1) @Max(18) int rooms) {}
+      @NotNull LocalDate checkIn, @NotNull LocalDate checkOut, @Min(1) @Max(6) int rooms) {}
 
   public record Draft(
       @NotNull LocalDate checkIn,
       @NotNull LocalDate checkOut,
-      @Min(1) @Max(18) int rooms,
+      @Min(1) @Max(6) int rooms,
       @Min(0) @Max(12) int suite,
       @Min(0) @Max(6) int deluxe,
-      @Min(1) @Max(36) int adults,
-      @Min(0) @Max(18) int children,
+      @Min(1) @Max(12) int adults,
+      @Min(0) @Max(12) int children,
       @NotBlank String mealPlan,
-      @NotNull @Size(max = 18) List<Long> selectedRoomIds,
-      boolean selectRooms) {}
+      @NotNull @Size(max = 6) List<Long> selectedRoomIds,
+      boolean selectRooms,
+      @NotNull @Size(min=1, max=6) List<@Valid Allocation> allocations) {}
+
+  public record Allocation(
+      @Pattern(regexp="suite|deluxe") @NotNull String category,
+      @Min(1) @Max(2) int adults,
+      @Min(0) @Max(2) int children) {}
 
   public record Guest(
       @NotBlank @Size(max = 120) String name,

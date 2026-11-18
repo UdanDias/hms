@@ -41,6 +41,7 @@ public class WebPortalServiceImpl implements WebPortalService {
   private final PaymentService paymentService;
   private final ReviewService reviewService;
   private final ObjectMapper json;
+  private final WebMealPricing mealPricing;
 
   @Value("${app.web.hotel-id:0}")
   private long hotelId;
@@ -335,9 +336,10 @@ public class WebPortalServiceImpl implements WebPortalService {
                     "area",
                     17,
                     "buildingStyle",
-                    "Private garden room",
+                    category(t).equals("suite") ? "Detached garden villa" : "Adjoining rooms",
                     "kitchen",
-                    true,
+                    category(t).equals("suite"),
+                    "maxAdults", t.getMaxAdults(), "maxChildren", t.getMaxChildren(), "maxOccupancy", t.getMaxOccupancy(),
                     "images",
                     List.of(),
                     "amenities",
@@ -347,29 +349,19 @@ public class WebPortalServiceImpl implements WebPortalService {
                         "Attached bathroom",
                         "Hot water",
                         "Workspace",
-                        "Kitchen")))
+                        category(t).equals("suite") ? "Kitchen & electric kettle" : "Balcony",
+                        category(t).equals("suite") ? "Ground-floor veranda / upper-floor balcony" : "No kitchen")))
         .toList();
   }
 
   @Override
   public Object plans() {
     h();
-    return all(AccommodationEntity.class).stream()
-        .filter(a -> hotel(a.getHotel()))
-        .map(
-            a ->
-                m(
-                    "id",
-                    plan(a.getType()),
-                    "name",
-                    a.getType() == AccommodationType.ROOM_ONLY
-                        ? "Room Only"
-                        : a.getType().getValue(),
-                    "description",
-                    "Per room, per night supplement",
-                    "supplement",
-                    a.getPrice()))
-        .toList();
+    return all(AccommodationEntity.class).stream().filter(a -> hotel(a.getHotel()))
+      .map(a -> { String key = plan(a.getType()); return m("id", key,
+        "name", mealPricing.name(key), "description", mealPricing.description(key),
+        "adultSupplement", mealPricing.rate(key, false), "childSupplement", mealPricing.rate(key, true)); })
+      .toList();
   }
 
   private void dates(LocalDate in, LocalDate out) {
@@ -428,39 +420,33 @@ public class WebPortalServiceImpl implements WebPortalService {
   }
 
   private List<RoomEntity> selected(WebRequests.Draft d) {
-    need(
-        d.rooms() == d.suite() + d.deluxe()
-            && d.rooms() <= 18
-            && d.adults() >= d.rooms()
-            && d.adults() <= 2 * d.rooms()
-            && d.children() <= d.rooms(),
-        "Room counts or occupancy are invalid");
-    var free = available(d.checkIn(), d.checkOut());
-    List<RoomEntity> chosen;
-    if (d.selectRooms()) {
-      need(
-          new HashSet<>(d.selectedRoomIds()).size() == d.rooms(),
-          "Select distinct rooms for the whole booking");
-      chosen = free.stream().filter(r -> d.selectedRoomIds().contains(r.getId())).toList();
-    } else {
-      var list = new ArrayList<RoomEntity>();
-      list.addAll(
-          free.stream()
-              .filter(r -> category(r.getRoomType()).equals("suite"))
-              .limit(d.suite())
-              .toList());
-      list.addAll(
-          free.stream()
-              .filter(r -> category(r.getRoomType()).equals("deluxe"))
-              .limit(d.deluxe())
-              .toList());
-      chosen = list;
+    need(d.allocations()!=null && d.rooms()>=1 && d.rooms()<=6 && d.allocations().size()==d.rooms(), "Choose between 1 and 6 rooms");
+    int adults=0, children=0, suites=0;
+    for (var a : d.allocations()) {
+      need(a!=null && Set.of("suite", "deluxe").contains(a.category()), "Select a valid room type");
+      need(a.adults()>=1 && a.adults()<=2 && a.children()>=0 && a.children()<=2 && a.adults()+a.children()<=3,
+        "Each room needs 1–2 adults and allows at most 3 guests in total");
+      adults+=a.adults(); children+=a.children(); if(a.category().equals("suite")) suites++;
     }
-    need(
-        chosen.size() == d.rooms()
-            && chosen.stream().filter(r -> category(r.getRoomType()).equals("suite")).count()
-                == d.suite(),
-        "Rooms no longer available; search again");
+    need(adults==d.adults() && children==d.children() && suites==d.suite() && d.deluxe()==d.rooms()-suites,
+      "Guest totals must match the individual rooms");
+    plan(d.mealPlan());
+    var free = available(d.checkIn(), d.checkOut());
+    need(d.selectedRoomIds()!=null, "Room selection is required");
+    if(d.selectRooms()) need(d.selectedRoomIds().size()==d.rooms() && new HashSet<>(d.selectedRoomIds()).size()==d.rooms(),
+      "Select distinct rooms for the whole booking");
+    var chosen = new ArrayList<RoomEntity>();
+    for (int i=0; i<d.allocations().size(); i++) {
+      var allocation=d.allocations().get(i);
+      final Long wanted=d.selectRooms() ? d.selectedRoomIds().get(i) : null;
+      var room=free.stream().filter(r -> !chosen.contains(r) && category(r.getRoomType()).equals(allocation.category()))
+        .filter(r -> wanted==null || r.getId().equals(wanted))
+        .filter(r -> allocation.adults()<=r.getRoomType().getMaxAdults()
+          && allocation.children()<=r.getRoomType().getMaxChildren()
+          && allocation.adults()+allocation.children()<=r.getRoomType().getMaxOccupancy())
+        .findFirst().orElseThrow(() -> new BusinessRuleException("A requested room is unavailable or cannot accommodate its guests; update your selection"));
+      chosen.add(room);
+    }
     return chosen;
   }
 
@@ -480,33 +466,31 @@ public class WebPortalServiceImpl implements WebPortalService {
           "Stay restrictions prevent this booking");
       total = total.add(rate.getNightlyRate());
     }
-    return money(total.add(plan(d.mealPlan()).getPrice().multiply(BigDecimal.valueOf(nights))));
+    return money(total);
+  }
+
+  private BigDecimal mealTotal(WebRequests.Draft d, int adults, int children) {
+    return money(mealPricing.rate(d.mealPlan(), false).multiply(BigDecimal.valueOf(adults))
+      .add(mealPricing.rate(d.mealPlan(), true).multiply(BigDecimal.valueOf(children)))
+      .multiply(BigDecimal.valueOf(ChronoUnit.DAYS.between(d.checkIn(), d.checkOut()))));
   }
 
   private Map<String, Object> quoteMap(WebRequests.Draft d, List<RoomEntity> chosen) {
     var lines = new ArrayList<Object>();
     BigDecimal total = ZERO;
+    long nights=ChronoUnit.DAYS.between(d.checkIn(), d.checkOut());
     for (var r : chosen) {
       var amount = roomPrice(r, d);
-      lines.add(
-          m(
-              "label",
-              r.getRoomType().getName() + " · Room " + r.getRoomNumber() + " · meal plan included",
-              "amount",
-              amount));
-      total = total.add(amount);
+      lines.add(m("label", r.getRoomType().getName()+" · Room "+r.getRoomNumber()+" · "+nights+" night(s)", "amount", amount));
+      total=total.add(amount);
     }
-    return m(
-        "nights",
-        ChronoUnit.DAYS.between(d.checkIn(), d.checkOut()),
-        "lines",
-        lines,
-        "total",
-        total,
-        "currency",
-        h().getCurrencyCode(),
-        "cancellationDeadline",
-        d.checkIn().atStartOfDay(ZoneId.of(h().getTimezone())).toOffsetDateTime().toString());
+    if(!d.mealPlan().equals("room-only")) {
+      if(d.adults()>0) lines.add(m("label", mealPricing.name(d.mealPlan())+" · "+d.adults()+" adults × "+mealPricing.rate(d.mealPlan(), false)+" × "+nights+" nights", "amount", mealTotal(d,d.adults(),0)));
+      if(d.children()>0) lines.add(m("label", mealPricing.name(d.mealPlan())+" · "+d.children()+" children × "+mealPricing.rate(d.mealPlan(), true)+" × "+nights+" nights", "amount", mealTotal(d,0,d.children())));
+    }
+    total=total.add(mealTotal(d,d.adults(),d.children()));
+    return m("nights", nights, "lines", lines, "total", total, "currency", h().getCurrencyCode(),
+      "cancellationDeadline", d.checkIn().atStartOfDay(ZoneId.of(h().getTimezone())).toOffsetDateTime().toString());
   }
 
   @Override
@@ -559,11 +543,12 @@ public class WebPortalServiceImpl implements WebPortalService {
     r.setConfirmedAt(UtilData.generateNow());
     em.persist(r);
     history(r, null, null, "confirmed");
-    int adultsLeft = d.adults() - d.rooms(), childrenLeft = d.children();
+    int allocationIndex = 0;
     long nights = ChronoUnit.DAYS.between(d.checkIn(), d.checkOut());
     for (var room : chosen) {
-      int adults = 1 + (adultsLeft-- > 0 ? 1 : 0);
-      int children = childrenLeft-- > 0 ? 1 : 0;
+      var allocation = d.allocations().get(allocationIndex++);
+      int adults = allocation.adults();
+      int children = allocation.children();
       var t = room.getRoomType();
       need(
           adults <= t.getMaxAdults()
@@ -578,7 +563,7 @@ public class WebPortalServiceImpl implements WebPortalService {
       s.setCheckOutDate(d.checkOut());
       s.setAdults(adults);
       s.setChildren(children);
-      var total = roomPrice(room, d);
+      var total = roomPrice(room, d).add(mealTotal(d, adults, children));
       var average = total.divide(BigDecimal.valueOf(nights), 2, RoundingMode.DOWN);
       s.setNightlyRate(average);
       s.setExtraPersonTotal(total.subtract(average.multiply(BigDecimal.valueOf(nights))));
@@ -1038,6 +1023,7 @@ public class WebPortalServiceImpl implements WebPortalService {
               && roomList.stream().filter(r -> category(r.getRoomType()).equals("deluxe")).count()
                   == 6,
           "Inventory must contain exactly 12 Suite and 6 Deluxe rooms");
+      need(roomList.stream().allMatch(r -> category(r.getRoomType()).equals(Integer.parseInt(r.getRoomNumber())<=6 ? "deluxe" : "suite")), "Room numbering does not match Deluxe 1–6 and Suite 7–18; reconcile manually without deleting bookings");
       need(
           roomList.stream()
               .map(RoomEntity::getRoomNumber)
@@ -1061,12 +1047,13 @@ public class WebPortalServiceImpl implements WebPortalService {
         t.setName(name);
         t.setDescription("King bed, air conditioning, attached bathroom, hot water and workspace.");
         t.setMaxAdults(2);
-        t.setMaxChildren(1);
+        t.setMaxChildren(2);
         t.setMaxOccupancy(3);
         t.setBedDescription("King-sized bed");
         t.setIsActive(true);
         em.persist(t);
       }
+      if(roomList.isEmpty()) { t.setMaxAdults(2); t.setMaxChildren(2); t.setMaxOccupancy(3); }
       types.add(t);
     }
     var status =
@@ -1090,9 +1077,10 @@ public class WebPortalServiceImpl implements WebPortalService {
       for (int n = 1; n <= 18; n++) {
         var r = new RoomEntity();
         r.setHotel(h());
-        r.setRoomType(types.get(n <= 12 ? 0 : 1));
+        r.setRoomType(types.get(n <= 6 ? 1 : 0));
         r.setRoomNumber(String.valueOf(n));
-        r.setFloor("Garden");
+        r.setFloor(n <= 6 ? (n <= 3 ? "Deluxe · 1st floor · balcony" : "Deluxe · 2nd floor · balcony")
+          : "Villa " + ((n-7)/3+1) + " · " + (List.of("Ground floor · veranda", "1st floor · balcony", "2nd floor · balcony").get((n-7)%3)));
         r.setOperationalStatus("active");
         r.setHousekeepingStatus("clean");
         r.setNotes("");
@@ -1134,7 +1122,7 @@ public class WebPortalServiceImpl implements WebPortalService {
     audit("INVENTORY_SETUP", hotelId);
     return m(
         "message",
-        "18-room inventory configured. Existing rates and meal prices were preserved.",
+        "18 rooms configured: Deluxe 1–6, Suite villas 7–18. Existing daily rates preserved. Website meal supplements come from app.web.meals properties.",
         "newDailyRates",
         added);
   }

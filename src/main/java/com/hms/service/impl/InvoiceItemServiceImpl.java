@@ -70,7 +70,7 @@ public class InvoiceItemServiceImpl implements InvoiceItemService {
 
   @Override
   public InvoiceItemDTO addInvoiceItem(InvoiceItemDTO invoiceItemDTO) {
-    serviceSecurity.requireRoles("ADMIN", "MANAGER", "ACCOUNTANT");
+    serviceSecurity.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST");
     hotelDao.lockAllForWrite();
     InvoiceItemEntity invoiceItemEntity =
         entityDTOConvert.convertInvoiceItemDTOToInvoiceItemEntity(invoiceItemDTO);
@@ -116,7 +116,7 @@ public class InvoiceItemServiceImpl implements InvoiceItemService {
 
   @Override
   public InvoiceItemDTO updateInvoiceItem(Long invoiceItemId, InvoiceItemDTO invoiceItemDTO) {
-    serviceSecurity.requireRoles("ADMIN", "MANAGER", "ACCOUNTANT");
+    serviceSecurity.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST");
     hotelDao.lockAllForWrite();
     InvoiceItemEntity invoiceItemEntity =
         invoiceItemDao
@@ -177,7 +177,7 @@ public class InvoiceItemServiceImpl implements InvoiceItemService {
 
   @Override
   public void deleteInvoiceItem(Long invoiceItemId) {
-    serviceSecurity.requireRoles("ADMIN", "MANAGER", "ACCOUNTANT");
+    serviceSecurity.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST");
     hotelDao.lockAllForWrite();
     InvoiceItemEntity invoiceItemEntity =
         invoiceItemDao

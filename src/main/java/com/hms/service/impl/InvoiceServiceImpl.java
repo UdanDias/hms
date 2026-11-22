@@ -74,7 +74,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
   @Override
   public InvoiceDTO addInvoice(InvoiceDTO invoiceDTO) {
-    serviceSecurity.requireRoles("ADMIN", "MANAGER", "ACCOUNTANT");
+    serviceSecurity.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST");
     hotelDao.lockAllForWrite();
     InvoiceEntity invoiceEntity = entityDTOConvert.convertInvoiceDTOToInvoiceEntity(invoiceDTO);
     if (invoiceDTO.getHotelId() != null) {
@@ -109,7 +109,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
   @Override
   public InvoiceDTO updateInvoice(Long invoiceId, InvoiceDTO invoiceDTO) {
-    serviceSecurity.requireRoles("ADMIN", "MANAGER", "ACCOUNTANT");
+    serviceSecurity.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST");
     hotelDao.lockAllForWrite();
     InvoiceEntity invoiceEntity =
         invoiceDao
@@ -208,7 +208,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
   @Override
   public InvoiceDTO issueInvoice(Long invoiceId) {
-    serviceSecurity.requireRoles("ADMIN", "MANAGER", "ACCOUNTANT");
+    serviceSecurity.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST");
     hotelDao.lockAllForWrite();
     InvoiceEntity invoiceEntity =
         invoiceDao
@@ -223,7 +223,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
   @Override
   public InvoiceDTO voidInvoice(Long invoiceId) {
-    serviceSecurity.requireRoles("ADMIN", "MANAGER", "ACCOUNTANT");
+    serviceSecurity.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST");
     hotelDao.lockAllForWrite();
     InvoiceEntity invoiceEntity =
         invoiceDao

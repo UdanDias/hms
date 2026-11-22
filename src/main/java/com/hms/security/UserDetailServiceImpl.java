@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserDetailServiceImpl implements UserDetailsService {
   private final UserDAO userDao;
   private static final Set<String> ROLES =
-      Set.of("ADMIN", "MANAGER", "RECEPTIONIST", "ACCOUNTANT", "HOUSEKEEPING", "GUEST");
+      Set.of("ADMIN", "MANAGER", "RECEPTIONIST", "HOUSEKEEPING", "GUEST");
 
   // Login accepts email. The resulting principal always exposes the canonical username.
   @Override

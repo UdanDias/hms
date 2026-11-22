@@ -47,7 +47,7 @@ public class BootstrapAdmin implements ApplicationRunner {
     if (!username.matches("[A-Za-z0-9_.-]{3,80}"))
       throw new IllegalArgumentException("Invalid bootstrap username");
     for (String type :
-        List.of("ADMIN", "MANAGER", "RECEPTIONIST", "ACCOUNTANT", "HOUSEKEEPING", "GUEST")) {
+        List.of("ADMIN", "MANAGER", "RECEPTIONIST", "HOUSEKEEPING", "GUEST")) {
       if (roles.findByType(type).isEmpty()) {
         var role = new RoleEntity();
         role.setType(type);

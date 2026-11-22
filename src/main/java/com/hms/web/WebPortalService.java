@@ -24,7 +24,7 @@ public interface WebPortalService {
 
   JsonNode cancel(Long id, String access);
 
-  JsonNode transition(Long id, String status);
+  JsonNode transition(Long id, String status, WebRequests.Identity identity);
 
   Object condition(Long id, WebRequests.Condition input);
 

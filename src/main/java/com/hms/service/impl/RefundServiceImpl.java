@@ -58,7 +58,7 @@ public class RefundServiceImpl implements RefundService {
 
   @Override
   public RefundDTO addRefund(RefundDTO refundDTO) {
-    serviceSecurity.requireRoles("ADMIN", "MANAGER", "ACCOUNTANT");
+    serviceSecurity.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST");
     hotelDao.lockAllForWrite();
     RefundEntity refundEntity = entityDTOConvert.convertRefundDTOToRefundEntity(refundDTO);
     if (refundDTO.getPaymentId() != null) {

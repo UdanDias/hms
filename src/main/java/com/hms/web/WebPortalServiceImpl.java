@@ -42,12 +42,13 @@ public class WebPortalServiceImpl implements WebPortalService {
   private final ReviewService reviewService;
   private final ObjectMapper json;
   private final WebMealPricing mealPricing;
+  private final WebCheckInIdentity identities;
 
   @Value("${app.web.hotel-id:0}")
   private long hotelId;
 
   private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(2);
-  private static final Set<String> STAFF = Set.of("ADMIN", "MANAGER", "RECEPTIONIST", "ACCOUNTANT");
+  private static final Set<String> STAFF = Set.of("ADMIN", "MANAGER", "RECEPTIONIST");
   private static final String SUITE = "Suite Double Room", DELUXE = "Deluxe Double Room";
 
   private Map<String, Object> m(Object... values) {
@@ -264,6 +265,13 @@ public class WebPortalServiceImpl implements WebPortalService {
             default -> r.getStatus();
           });
       n.put("paid", paid(r));
+      n.set("roomNumbers", json.valueToTree(stays.findByReservationId(r.getId()).stream().map(stay -> stay.getRoom().getRoomNumber()).toList()));
+      n.remove("checkInIdentity");
+      var viewer=actor();
+      if(viewer!=null && STAFF.contains(role(viewer))) {
+        var identity=identities.read(r.getId());
+        if(identity!=null) n.set("checkInIdentity", json.valueToTree(identity));
+      }
       return n;
     } catch (Exception e) {
       throw new IllegalStateException(e);
@@ -647,7 +655,7 @@ public class WebPortalServiceImpl implements WebPortalService {
   @Override
   public Object bookings(boolean mine) {
     var u = security.getCurrentUser();
-    if (!mine) security.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST", "ACCOUNTANT");
+    if (!mine) security.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST");
     return all(WebBookingEntity.class).stream()
         .filter(w -> hotel(w.getReservation().getHotel()))
         .filter(
@@ -698,12 +706,16 @@ public class WebPortalServiceImpl implements WebPortalService {
   }
 
   @Override
-  public JsonNode transition(Long id, String status) {
+  public JsonNode transition(Long id, String status, WebRequests.Identity identity) {
     security.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST");
     lock();
     var w = web(id);
     need(hotel(w.getReservation().getHotel()), "Wrong hotel");
-    if ("checked-in".equals(status)) reservations.checkInReservation(id);
+    if ("checked-in".equals(status)) {
+      need(identity != null, "Enter the guest's document type and number before check-in");
+      reservations.checkInReservation(id);
+      identities.save(id, identity);
+    }
     else if ("completed".equals(status)) reservations.checkOutReservation(id);
     else throw new IllegalArgumentException("Invalid transition");
     return view(w);
@@ -878,7 +890,7 @@ public class WebPortalServiceImpl implements WebPortalService {
 
   @Override
   public Object payments() {
-    security.requireRoles("ADMIN", "MANAGER", "ACCOUNTANT");
+    security.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST");
     return all(PaymentEntity.class).stream()
         .filter(p -> hotel(p.getHotel()))
         .map(
@@ -901,7 +913,7 @@ public class WebPortalServiceImpl implements WebPortalService {
 
   @Override
   public Object cash(WebRequests.Cash input) {
-    security.requireRoles("ADMIN", "MANAGER", "ACCOUNTANT");
+    security.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST");
     lock();
     var r = web(input.bookingId()).getReservation();
     need(
@@ -1091,7 +1103,11 @@ public class WebPortalServiceImpl implements WebPortalService {
     int added = 0;
     for (int index = 0; index < 2; index++)
       for (LocalDate date = in.start(); date.isBefore(in.end()); date = date.plusDays(1)) {
-        if (rates.findByRoomTypeIdAndStayDate(types.get(index).getId(), date).isPresent()) continue;
+        var existing = rates.findByRoomTypeIdAndStayDate(types.get(index).getId(), date);
+        if(existing.isPresent()) {
+          existing.get().setNightlyRate(money(index == 0 ? in.suiteRate() : in.deluxeRate()));
+          continue;
+        }
         var rate = new RoomRateEntity();
         rate.setRoomType(types.get(index));
         rate.setStayDate(date);
@@ -1122,7 +1138,7 @@ public class WebPortalServiceImpl implements WebPortalService {
     audit("INVENTORY_SETUP", hotelId);
     return m(
         "message",
-        "18 rooms configured: Deluxe 1–6, Suite villas 7–18. Existing daily rates preserved. Website meal supplements come from app.web.meals properties.",
+        "18 rooms configured: Deluxe 1–6, Suite villas 7–18. Nightly rates updated for the selected date range. Existing bookings keep their confirmed prices. Meal supplements are managed below.",
         "newDailyRates",
         added);
   }

@@ -66,7 +66,7 @@ public class RoleServiceImpl implements RoleService {
     validationUtil.text(roleEntity.getType(), "Role type");
     roleEntity.setType(roleEntity.getType().toUpperCase(Locale.ROOT));
     validationUtil.require(
-        Set.of("ADMIN", "MANAGER", "RECEPTIONIST", "ACCOUNTANT", "HOUSEKEEPING", "GUEST")
+        Set.of("ADMIN", "MANAGER", "RECEPTIONIST", "HOUSEKEEPING", "GUEST")
             .contains(roleEntity.getType()),
         "Unsupported role type");
   }

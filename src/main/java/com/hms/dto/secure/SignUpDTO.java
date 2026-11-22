@@ -30,5 +30,6 @@ public class SignUpDTO implements Serializable {
 
   @NotBlank
   @Size(max = 255)
+  @com.hms.web.ValidPhone
   private String phone;
 }

@@ -71,6 +71,16 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   @Override
+  protected ResponseEntity<Object> handleMethodArgumentNotValid(
+      org.springframework.web.bind.MethodArgumentNotValidException e,
+      HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+    String message=e.getBindingResult().getFieldErrors().stream()
+      .map(field -> field.getField()+": "+field.getDefaultMessage())
+      .distinct().collect(java.util.stream.Collectors.joining("; "));
+    return error(HttpStatus.BAD_REQUEST, message.isBlank()?"Check the submitted fields":message);
+  }
+
+  @Override
   protected ResponseEntity<Object> handleExceptionInternal(
       Exception e, Object body, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
     return new ResponseEntity<>(

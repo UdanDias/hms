@@ -65,7 +65,7 @@ public class ServiceSecurity {
             || entity instanceof RoomRateEntity
             || entity instanceof AccommodationEntity
             || entity instanceof HotelServiceEntity;
-    if (Set.of("MANAGER", "RECEPTIONIST", "ACCOUNTANT").contains(role)) return true;
+    if (Set.of("MANAGER", "RECEPTIONIST").contains(role)) return true;
     if ("HOUSEKEEPING".equals(role)) return catalogue;
     if (!"GUEST".equals(role)) return false;
     if (catalogue) return true;

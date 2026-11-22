@@ -69,7 +69,7 @@ public class PaymentServiceImpl implements PaymentService {
 
   @Override
   public PaymentDTO addPayment(PaymentDTO paymentDTO) {
-    serviceSecurity.requireRoles("ADMIN", "MANAGER", "ACCOUNTANT");
+    serviceSecurity.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST");
     hotelDao.lockAllForWrite();
     PaymentEntity paymentEntity = entityDTOConvert.convertPaymentDTOToPaymentEntity(paymentDTO);
     if (paymentDTO.getHotelId() != null) {
@@ -146,7 +146,7 @@ public class PaymentServiceImpl implements PaymentService {
 
   @Override
   public PaymentDTO allocatePayment(Long paymentId, Long invoiceId) {
-    serviceSecurity.requireRoles("ADMIN", "MANAGER", "ACCOUNTANT");
+    serviceSecurity.requireRoles("ADMIN", "MANAGER", "RECEPTIONIST");
     hotelDao.lockAllForWrite();
     PaymentEntity paymentEntity =
         paymentDao

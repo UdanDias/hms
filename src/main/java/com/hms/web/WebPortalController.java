@@ -10,6 +10,12 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class WebPortalController {
   private final WebPortalService service;
+  private final WebMealPricing meals;
+  @PatchMapping("/plans")
+  public Object saveMeals(@Valid @RequestBody java.util.List<WebRequests.Meal> input) {
+    meals.save(input);
+    return service.plans();
+  }
 
   @GetMapping("/public/hotel")
   public Object hotel() {
@@ -74,8 +80,8 @@ public class WebPortalController {
   }
 
   @PatchMapping("/bookings/{id}/{status}")
-  public Object transition(@PathVariable Long id, @PathVariable String status) {
-    return service.transition(id, status);
+  public Object transition(@PathVariable Long id, @PathVariable String status, @Valid @RequestBody(required=false) WebRequests.Identity identity) {
+    return service.transition(id, status, identity);
   }
 
   @PatchMapping("/rooms/{id}")
